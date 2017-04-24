@@ -1,0 +1,28 @@
+<launch>
+  <arg name="ns" default="myrobot"/>
+  <arg name="id_subsystem" default="133"/>
+  <arg name="id_node" default="64"/>
+  <group ns="$(arg ns)">
+      <node name="iop_range_sensor" pkg="iop_component_fkie" type="iop_component">
+        <param name="capability_group" value="iop_bridge"/>
+        <rosparam param="services">
+          [
+            iop_range_sensor_fkie: "urn:jaus:jss:environmentSensing:RangeSensor_1_0",
+            iop_discovery_1_0_fkie: "urn:jaus:jss:core:DiscoveryClient_1_0",
+            iop_accesscontrol_1_0_fkie: "urn:jaus:jss:core:AccessControl_1_0",
+            iop_events_1_0_fkie: "urn:jaus:jss:core:Events_1_0",
+            iop_events_1_0_fkie: "urn:jaus:jss:core:EventsClient_1_0",
+            iop_transport_1_0_fkie: "urn:jaus:jss:core:Transport_1_0",
+          ]
+        </rosparam>
+        <param name="iop_address" value="$(arg id_subsystem).$(arg id_node).50"/>
+        <param name="enable_ros_interface" value="false"/>
+        <!-- tf_frame_robot is used to determine the vehicle's coordinates for the range sensor.
+             If the transformation is not possible only native laser data will be send. -->
+        <!-- <param name="tf_frame_robot" value="base_link"/>-->
+        <!-- defines the laser sensors. It is a dictinary with frame_id as key and topic as value -->
+        <param name="register_own_services" value="true"/>
+        <rosparam param="sensors">[laser_front, laser_rear, laser_turret]</rosparam>
+    </node>
+  </group>
+</launch>

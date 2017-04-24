@@ -1,0 +1,240 @@
+/**
+ROS/IOP Bridge
+Copyright (c) 2017 Fraunhofer
+
+This program is dual licensed; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2 as published by the Free Software Foundation, or
+enter into a proprietary license agreement with the copyright
+holder.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; or you can read the full license at
+<http://www.gnu.de/documents/gpl-2.0.html>
+*/
+
+/** \author Alexander Tiderko */
+
+
+#include "urn_jaus_jss_environmentSensing_DigitalVideo_1_0/DigitalVideo_ReceiveFSM.h"
+
+
+
+
+using namespace JTS;
+using namespace urn_jaus_jss_core_DiscoveryClient_1_0;
+using namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient_1_0;
+using namespace digital_resource_endpoint;
+
+namespace urn_jaus_jss_environmentSensing_DigitalVideo_1_0
+{
+
+static unsigned short sensor_id = 1;
+
+DigitalVideo_ReceiveFSM::DigitalVideo_ReceiveFSM(urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl_1_0::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_environmentSensing_VisualSensor_1_0::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM)
+{
+
+	/*
+	 * If there are other variables, context must be constructed last so that all
+	 * class variables are available if an EntryAction of the InitialState of the
+	 * statemachine needs them.
+	 */
+	context = new DigitalVideo_ReceiveFSMContext(*this);
+
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pVisualSensor_ReceiveFSM = pVisualSensor_ReceiveFSM;
+	p_discovery_client_service = NULL;
+	p_ds_discovery_client_service = NULL;
+
+}
+
+
+
+DigitalVideo_ReceiveFSM::~DigitalVideo_ReceiveFSM()
+{
+	delete context;
+}
+
+void DigitalVideo_ReceiveFSM::setupNotifications()
+{
+	pVisualSensor_ReceiveFSM->registerNotification("Receiving_Ready_NotControlled", ieHandler, "InternalStateChange_To_DigitalVideo_ReceiveFSM_Receiving_Ready_NotControlled", "VisualSensor_ReceiveFSM");
+	pVisualSensor_ReceiveFSM->registerNotification("Receiving_Ready_Controlled", ieHandler, "InternalStateChange_To_DigitalVideo_ReceiveFSM_Receiving_Ready_Controlled", "VisualSensor_ReceiveFSM");
+	pVisualSensor_ReceiveFSM->registerNotification("Receiving_Ready", ieHandler, "InternalStateChange_To_DigitalVideo_ReceiveFSM_Receiving_Ready_NotControlled", "VisualSensor_ReceiveFSM");
+	pVisualSensor_ReceiveFSM->registerNotification("Receiving", ieHandler, "InternalStateChange_To_DigitalVideo_ReceiveFSM_Receiving_Ready_NotControlled", "VisualSensor_ReceiveFSM");
+	registerNotification("Receiving_Ready_NotControlled", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready_NotControlled", "DigitalVideo_ReceiveFSM");
+	registerNotification("Receiving_Ready_Controlled", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready_Controlled", "DigitalVideo_ReceiveFSM");
+	registerNotification("Receiving_Ready", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready", "DigitalVideo_ReceiveFSM");
+	registerNotification("Receiving", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving", "DigitalVideo_ReceiveFSM");
+
+	p_discovery_client_service = dynamic_cast<DiscoveryClientService*>(iop::Component::get_instance().get_service(typeid(DiscoveryClientService)));
+	if (p_discovery_client_service == NULL)
+		throw std::runtime_error("DiscoveryClientService not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
+	p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService*>(iop::Component::get_instance().get_service(typeid(DigitalResourceDiscoveryClientService)));
+	if (p_ds_discovery_client_service == NULL)
+		throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");
+	ros::NodeHandle n;
+	ros::NodeHandle pnh("~");
+	std::string rtsp_topic = "";
+	std::string mjpeg_uri = "";
+	XmlRpc::XmlRpcValue endpoints;
+	pnh.getParam("video_endpoints", endpoints);
+	if (endpoints.getType() != XmlRpc::XmlRpcValue::TypeStruct) {
+		ROS_ERROR("wrong '~video_endpoints' format, expected: ID/TYPE/URL.\n  ID: ressource id {0..254}\n  TYPE: server type {rtsp_topic, rtsp, http}");
+		ROS_BREAK();
+	}
+	ROS_ASSERT(endpoints.getType() == XmlRpc::XmlRpcValue::TypeStruct);
+	for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = endpoints.begin(); it != endpoints.end(); ++it) {
+		ROS_INFO_STREAM("Found digital endpoint: " << (std::string)(it->first) << " ==> " << endpoints[it->first]);
+		std::string ep_id_str = (std::string)(it->first);
+		int ep_id = std::atoi(ep_id_str.c_str());
+		if (endpoints[it->first].getType() != XmlRpc::XmlRpcValue::TypeStruct) {
+			ROS_ERROR("wrong '~video_endpoints' format, expected: ID/TYPE/URL.\n  ID: int value 0-254\n  TYPE: {rtsp_topic, rtsp, http}");
+			ROS_BREAK();
+		}
+		ROS_ASSERT(endpoints[it->first].getType() == XmlRpc::XmlRpcValue::TypeStruct);
+		for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it2 = endpoints[it->first].begin(); it2!= endpoints[it->first].end(); ++it2) {
+			std::string ep_type = (std::string)(it2->first);
+			std::string ep_addr = (std::string)(endpoints[it->first][it2->first]);
+			ROS_INFO_STREAM("  type: " << ep_type << " ==> " << endpoints[it->first][it2->first]);
+			DigitalResourceEndpoint endpoint;
+			if (ep_type.compare("rtsp_topic") == 0) {
+				endpoint.resource_id = ep_id;
+				endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
+				ROS_INFO("    get RTPS from topic: %s", ep_addr.c_str());
+				p_topics_map[ep_addr] = ep_id;
+				p_endpoints[ep_id] = endpoint;
+				p_subscriber[ep_addr] = n.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
+			} else if (ep_type.compare("rtsp") == 0) {
+				endpoint.resource_id = ep_id;
+				endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
+				ROS_INFO("    RTPS: %s", ep_addr.c_str());
+				p_endpoints[ep_id] = endpoint;
+			} else if (ep_type.compare("http") == 0) {
+				endpoint.resource_id = ep_id;
+				endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_HTTP;
+				ROS_INFO("    HTTP: %s", ep_addr.c_str());
+				p_endpoints[ep_id] = endpoint;
+			}
+		}
+	}
+
+	p_discovery_client_service->pDiscoveryClient_ReceiveFSM->discover("urn:jaus:jss:iop:DigitalResourceDiscovery", &DigitalVideo_ReceiveFSM::discovered, this, 1, 0, jausRouter->getJausAddress()->getSubsystemID());
+}
+
+void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigitalVideoSensorStream msg)
+{
+	/// Insert User Code HERE
+	printf("[DigitalVideo] modifyDigitalVideoSensorStreamAction not implemented\n");
+}
+
+void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
+{
+	/// Insert User Code HERE
+	uint16_t subsystem_id = transportData.getSrcSubsystemID();
+	uint8_t node_id = transportData.getSrcNodeID();
+	uint8_t component_id = transportData.getSrcComponentID();
+	JausAddress sender(subsystem_id, node_id, component_id);
+	ROS_DEBUG_NAMED("DigitalVideo", "sendConfirmSensorConfigurationAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	unsigned char request_id = msg.getBody()->getDigitalVideoSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
+	ConfirmSensorConfiguration response;
+	response.getBody()->getConfirmSensorConfigurationSequence()->getRequestIdRec()->setRequestID(request_id);
+	sendJausMessage(response,sender);
+}
+
+void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorCapabilitiesAction(QueryDigitalVideoSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
+{
+	/// Insert User Code HERE
+	uint16_t subsystem_id = transportData.getSrcSubsystemID();
+	uint8_t node_id = transportData.getSrcNodeID();
+	uint8_t component_id = transportData.getSrcComponentID();
+	JausAddress sender(subsystem_id, node_id, component_id);
+	ROS_DEBUG_NAMED("DigitalVideo", "sendReportDigitalVideoSensorCapabilitiesAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	ReportDigitalVideoSensorCapabilities response;
+	ReportDigitalVideoSensorCapabilities::Body::DigitalVideoSensorList::DigitalVideoSensorCapabilitiesRec entry;
+	entry.setSensorID(sensor_id);
+	response.getBody()->getDigitalVideoSensorList()->addElement(entry);
+	sendJausMessage(response, sender);
+}
+
+void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorConfigurationAction(QueryDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
+{
+	/// Insert User Code HERE
+	uint16_t subsystem_id = transportData.getSrcSubsystemID();
+	uint8_t node_id = transportData.getSrcNodeID();
+	uint8_t component_id = transportData.getSrcComponentID();
+	JausAddress sender(subsystem_id, node_id, component_id);
+	ROS_DEBUG_NAMED("DigitalVideo", "sendReportDigitalVideoSensorConfigurationAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	ReportDigitalVideoSensorConfiguration response;
+	ReportDigitalVideoSensorConfiguration::Body::DigitalVideoSensorConfigurationList::DigitalVideoSensorConfigurationRec entry;
+	entry.setSensorID(sensor_id);
+	response.getBody()->getDigitalVideoSensorConfigurationList()->addElement(entry);
+	sendJausMessage(response, sender);
+}
+
+void DigitalVideo_ReceiveFSM::updateDigitalVideoSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg)
+{
+	/// Insert User Code HERE
+	ROS_WARN_NAMED("DigitalVideo", "updateDigitalVideoSensorConfigurationAction not implemented");
+}
+
+
+
+bool DigitalVideo_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec transportData)
+{
+	//// By default, inherited guards call the parent function.
+	//// This can be replaced or modified as needed.
+	return pAccessControl_ReceiveFSM->isControllingClient(transportData );
+}
+
+
+void DigitalVideo_ReceiveFSM::discovered(const std::string &service_uri, JausAddress &iop_address)
+{
+  ROS_INFO("discovered %s @ %d.%d.%d", service_uri.c_str(), iop_address.getSubsystemID(), iop_address.getNodeID(), iop_address.getComponentID());
+  p_digital_resource_discovery_addr = iop_address;
+  for (std::map<int, DigitalResourceEndpoint>::iterator it = p_endpoints.begin(); it != p_endpoints.end(); ++it) {
+    pRegisterVideo(it->second);
+  }
+}
+
+void DigitalVideo_ReceiveFSM::ros_video_rtsp_handler(const ros::MessageEvent<const std_msgs::String >& event)
+{
+  /*
+   * Store the URL of the rtsp stream. This will be returned by discovering.
+   */
+  const std_msgs::String& msg = *event.getMessage();
+  std::string topic_name = event.getConnectionHeader()["topic"];
+  std::map<std::string, int>::iterator it = p_topics_map.find(topic_name);
+  if (it != p_topics_map.end()) {
+    p_endpoints[p_topics_map[topic_name]].server_url = msg.data;
+    ROS_INFO("received RTSP URL: %s\n", msg.data.c_str());
+    pRegisterVideo(p_endpoints[p_topics_map[topic_name]]);
+  }
+}
+
+void DigitalVideo_ReceiveFSM::pRegisterVideo(DigitalResourceEndpoint endpoint)
+{
+  if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
+    ROS_INFO("register video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
+    endpoint.iop_id = *(jausRouter->getJausAddress());
+    p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->registerEndpoint(endpoint, p_digital_resource_discovery_addr);
+  }
+}
+
+void DigitalVideo_ReceiveFSM::pUnregisterVideo(DigitalResourceEndpoint endpoint)
+{
+  if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
+    ROS_INFO("unregister video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
+    endpoint.iop_id = *(jausRouter->getJausAddress());
+    p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->unregisterEndpoint(endpoint, p_digital_resource_discovery_addr);
+  }
+}
+
+
+};
