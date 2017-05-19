@@ -73,10 +73,10 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready", "DigitalVideo_ReceiveFSM");
 	registerNotification("Receiving", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving", "DigitalVideo_ReceiveFSM");
 
-	p_discovery_client_service = dynamic_cast<DiscoveryClientService*>(iop::Component::get_instance().get_service(typeid(DiscoveryClientService)));
+	p_discovery_client_service = dynamic_cast<DiscoveryClientService*>(iop::Component::get_instance().get_service("DiscoveryClient"));
 	if (p_discovery_client_service == NULL)
 		throw std::runtime_error("DiscoveryClientService not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
-	p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService*>(iop::Component::get_instance().get_service(typeid(DigitalResourceDiscoveryClientService)));
+	p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService*>(iop::Component::get_instance().get_service("DigitalResourceDiscoveryClient"));
 	if (p_ds_discovery_client_service == NULL)
 		throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");
 	ros::NodeHandle n;

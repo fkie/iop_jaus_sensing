@@ -40,33 +40,17 @@ DigitalVideoPlugin_1_0::DigitalVideoPlugin_1_0()
 	p_transport_service = NULL;
 }
 
-DigitalVideoPlugin_1_0::~DigitalVideoPlugin_1_0()
-{
-
-}
-
-JTS::Service* DigitalVideoPlugin_1_0::get_iop_service()
+JTS::Service* DigitalVideoPlugin_1_0::get_service()
 {
 	return p_my_service;
 }
 
-const std::type_info & DigitalVideoPlugin_1_0::get_iop_service_type()
+void DigitalVideoPlugin_1_0::create_service(JTS::JausRouter* jaus_router)
 {
-	return typeid(DigitalVideoService);
-}
-
-const std::type_info & DigitalVideoPlugin_1_0::get_base_service_type()
-{
-	return typeid(VisualSensorService);
-}
-
-
-void DigitalVideoPlugin_1_0::create_jts_service(JTS::JausRouter* jaus_router)
-{
-	p_base_service = dynamic_cast<VisualSensorService *>(get_base_service());
-	p_accesscontrol_service = dynamic_cast<AccessControlService *>(get_base_service(2));
-	p_events_service = dynamic_cast<EventsService *>(get_base_service(3));
-	p_transport_service = dynamic_cast<TransportService *>(get_base_service(4));
+	p_base_service = static_cast<VisualSensorService *>(get_base_service());
+	p_accesscontrol_service = static_cast<AccessControlService *>(get_base_service(2));
+	p_events_service = static_cast<EventsService *>(get_base_service(3));
+	p_transport_service = static_cast<TransportService *>(get_base_service(4));
 	p_my_service = new DigitalVideoService(jaus_router, p_transport_service, p_events_service, p_accesscontrol_service, p_base_service);
 }
 

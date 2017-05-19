@@ -1,13 +1,19 @@
 <library path="libiop_digital_video_fkie">
-  <class name="urn:jaus:jss:environmentSensing:DigitalVideo_1_0" type="iop::DigitalVideoPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="DigitalVideo_1_0" type="iop::DigitalVideoPlugin_1_0" base_class_type="iop::PluginInterface">
     <description>
       DigitalVideo Service Plugin
     </description>
+    <iop_service name="DigitalVideo" id="urn:jaus:jss:environmentSensing:DigitalVideo" version="1.0">
+      <inherits_from id="urn:jaus:jss:environmentSensing:VisualSensor" min_version="1.0"/>
+    </iop_service>
   </class>
 
-  <class name="urn:jaus:jss:environmentSensing:VisualSensor_1_0" type="iop::VisualSensorPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="VisualSensor_1_0" type="iop::VisualSensorPlugin_1_0" base_class_type="iop::PluginInterface">
     <description>
       VisualSensor Service Plugin
     </description>
+    <iop_service name="VisualSensor" id="urn:jaus:jss:environmentSensing:VisualSensor" version="1.0">
+      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.0"/>
+    </iop_service>
   </class>
 </library>
