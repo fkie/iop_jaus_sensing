@@ -28,18 +28,18 @@ along with this program; or you can read the full license at
 #include "InternalEvents/InternalEventHandler.h"
 #include "Transport/JausTransport.h"
 #include "JTSStateMachine.h"
-#include "urn_jaus_jss_environmentSensing_DigitalVideo_1_0/Messages/MessageSet.h"
-#include "urn_jaus_jss_environmentSensing_DigitalVideo_1_0/InternalEvents/InternalEventsSet.h"
+#include "urn_jaus_jss_environmentSensing_DigitalVideo/Messages/MessageSet.h"
+#include "urn_jaus_jss_environmentSensing_DigitalVideo/InternalEvents/InternalEventsSet.h"
 
-typedef JTS::Receive_1_0 Receive;
-typedef JTS::Send_1_0 Send;
+typedef JTS::Receive Receive;
+typedef JTS::Send Send;
 
-#include "urn_jaus_jss_core_Transport_1_0/Transport_ReceiveFSM.h"
-#include "urn_jaus_jss_core_Events_1_0/Events_ReceiveFSM.h"
-#include "urn_jaus_jss_core_AccessControl_1_0/AccessControl_ReceiveFSM.h"
-#include "urn_jaus_jss_environmentSensing_VisualSensor_1_0/VisualSensor_ReceiveFSM.h"
-#include "urn_jaus_jss_core_DiscoveryClient_1_0/DiscoveryClientService.h"
-#include "urn_jaus_jss_iop_DigitalResourceDiscoveryClient_1_0/DigitalResourceDiscoveryClientService.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
+#include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
+#include "urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.h"
+#include "urn_jaus_jss_core_DiscoveryClient/DiscoveryClientService.h"
+#include "urn_jaus_jss_iop_DigitalResourceDiscoveryClient/DigitalResourceDiscoveryClientService.h"
 
 
 #include "DigitalVideo_ReceiveFSM_sm.h"
@@ -49,13 +49,13 @@ typedef JTS::Send_1_0 Send;
 #include "DigitalResourceEndpoint.h"
 #include "iop_component_fkie/iop_component.h"
 
-namespace urn_jaus_jss_environmentSensing_DigitalVideo_1_0
+namespace urn_jaus_jss_environmentSensing_DigitalVideo
 {
 
 class DllExport DigitalVideo_ReceiveFSM : public JTS::StateMachine
 {
 public:
-	DigitalVideo_ReceiveFSM(urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl_1_0::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_environmentSensing_VisualSensor_1_0::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM);
+	DigitalVideo_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_environmentSensing_VisualSensor::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM);
 	virtual ~DigitalVideo_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
@@ -79,13 +79,13 @@ public:
 protected:
 
     /// References to parent FSMs
-	urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM;
-	urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM;
-	urn_jaus_jss_core_AccessControl_1_0::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
-	urn_jaus_jss_environmentSensing_VisualSensor_1_0::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+	urn_jaus_jss_environmentSensing_VisualSensor::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM;
 
-	urn_jaus_jss_core_DiscoveryClient_1_0::DiscoveryClientService* p_discovery_client_service;
-	urn_jaus_jss_iop_DigitalResourceDiscoveryClient_1_0::DigitalResourceDiscoveryClientService *p_ds_discovery_client_service;
+	urn_jaus_jss_core_DiscoveryClient::DiscoveryClientService* p_discovery_client_service;
+	urn_jaus_jss_iop_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService *p_ds_discovery_client_service;
 	JausAddress p_digital_resource_discovery_addr;
 	std::map<int, digital_resource_endpoint::DigitalResourceEndpoint> p_endpoints;
 	std::map<std::string, int> p_topics_map;

@@ -5,17 +5,15 @@ project(iop_digital_video_fkie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-             iop_accesscontrol_1_0_fkie
-             iop_builder_fkie
-             iop_component_fkie
+             iop_accesscontrol_fkie
              iop_digital_resource_discovery_fkie
-             iop_discovery_1_0_fkie
+             iop_discovery_fkie
              roscpp
              sensor_msgs
              )
 iop_init(COMPONENT_ID 81)
-iop_export_service(urn_jaus_jss_environmentSensing_DigitalVideo_1_0
-                   urn_jaus_jss_environmentSensing_VisualSensor_1_0)
+iop_export_service(urn_jaus_jss_environmentSensing_DigitalVideo
+                   urn_jaus_jss_environmentSensing_VisualSensor)
 
 
 ###################################
@@ -25,11 +23,9 @@ catkin_package(
     INCLUDE_DIRS include/${PROJECT_NAME}
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
-        iop_accesscontrol_1_0_fkie
-        iop_builder_fkie
-        iop_component_fkie
+        iop_accesscontrol_fkie
         iop_digital_resource_discovery_fkie
-        iop_discovery_1_0_fkie
+        iop_discovery_fkie
         sensor_msgs
 )
 
@@ -49,34 +45,32 @@ iop_code_generator(
     urn.jaus.jss.iop/DigitalResourceDiscoveryClient_v1.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_environmentSensing_DigitalVideo_1_0/DigitalVideo_ReceiveFSM.h
-    src/urn_jaus_jss_environmentSensing_DigitalVideo_1_0/DigitalVideo_ReceiveFSM.cpp
-    src/urn_jaus_jss_environmentSensing_VisualSensor_1_0/VisualSensor_ReceiveFSM.cpp
+    include/urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.h
+    src/urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.cpp
+    src/urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.cpp
     src/main.cpp
   EXTERN_SERVICES
-    urn_jaus_jss_core_Events_1_0
-    urn_jaus_jss_core_EventsClient_1_0
-    urn_jaus_jss_core_AccessControl_1_0
-    urn_jaus_jss_core_Transport_1_0
-    urn_jaus_jss_iop_DigitalResourceDiscoveryClient_1_0
+    urn_jaus_jss_core_Events
+    urn_jaus_jss_core_EventsClient
+    urn_jaus_jss_core_AccessControl
+    urn_jaus_jss_core_Transport
+    urn_jaus_jss_iop_DigitalResourceDiscoveryClient
   GENERATED_SOURCES cppfiles
 )
 
 include_directories(
     ${catkin_INCLUDE_DIRS}
-    ${IOP_INCLUDE_DIRS}
     include/${PROJECT_NAME}
 )
 add_library(${PROJECT_NAME}
-            src/DigitalVideoPlugin_1_0.cpp
-            src/VisualSensorPlugin_1_0.cpp
+            src/DigitalVideoPlugin.cpp
+            src/VisualSensorPlugin.cpp
             ${cppfiles}
 )
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
-                      ${IOP_LIBRARIES}
 )
 
 #############

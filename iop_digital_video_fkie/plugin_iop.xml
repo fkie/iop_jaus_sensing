@@ -1,5 +1,5 @@
 <library path="libiop_digital_video_fkie">
-  <class name="DigitalVideo_1_0" type="iop::DigitalVideoPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="DigitalVideo" type="iop::DigitalVideoPlugin" base_class_type="iop::PluginInterface">
     <description>
       DigitalVideo Service Plugin
     </description>
@@ -8,7 +8,7 @@
     </iop_service>
   </class>
 
-  <class name="VisualSensor_1_0" type="iop::VisualSensorPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="VisualSensor" type="iop::VisualSensorPlugin" base_class_type="iop::PluginInterface">
     <description>
       VisualSensor Service Plugin
     </description>

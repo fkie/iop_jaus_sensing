@@ -21,20 +21,20 @@ along with this program; or you can read the full license at
 /** \author Alexander Tiderko */
 
 
-#include "urn_jaus_jss_environmentSensing_VisualSensor_1_0/VisualSensor_ReceiveFSM.h"
+#include "urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.h"
 
 
 
 
 using namespace JTS;
 
-namespace urn_jaus_jss_environmentSensing_VisualSensor_1_0
+namespace urn_jaus_jss_environmentSensing_VisualSensor
 {
 
 static jUnsignedByte request_id;
 
 
-VisualSensor_ReceiveFSM::VisualSensor_ReceiveFSM(urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl_1_0::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
+VisualSensor_ReceiveFSM::VisualSensor_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
 {
 
 	/*

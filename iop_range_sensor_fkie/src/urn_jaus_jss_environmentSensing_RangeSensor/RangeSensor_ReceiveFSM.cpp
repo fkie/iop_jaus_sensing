@@ -20,10 +20,9 @@ along with this program; or you can read the full license at
 
 /** \author Alexander Tiderko */
 
-#include "urn_jaus_jss_environmentSensing_RangeSensor_1_0/RangeSensor_ReceiveFSM.h"
+#include "urn_jaus_jss_environmentSensing_RangeSensor/RangeSensor_ReceiveFSM.h"
 #include <iostream>
 #include <string>
-using std::string;
 #include "include/Iop_range_sensor_fkie.h"
 #include "JausUtils.h"
 #include <sensor_msgs/LaserScan.h>
@@ -35,21 +34,21 @@ using std::string;
 
 
 using namespace JTS;
-using namespace urn_jaus_jss_core_Transport_1_0;
-using namespace urn_jaus_jss_core_Events_1_0;
-using namespace urn_jaus_jss_core_AccessControl_1_0;
-using namespace urn_jaus_jss_environmentSensing_RangeSensor_1_0;
+using namespace urn_jaus_jss_core_Transport;
+using namespace urn_jaus_jss_core_Events;
+using namespace urn_jaus_jss_core_AccessControl;
+using namespace urn_jaus_jss_environmentSensing_RangeSensor;
 
 
 
 using namespace JTS;
 
-namespace urn_jaus_jss_environmentSensing_RangeSensor_1_0
+namespace urn_jaus_jss_environmentSensing_RangeSensor
 {
 
 
 
-RangeSensor_ReceiveFSM::RangeSensor_ReceiveFSM(urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl_1_0::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
+RangeSensor_ReceiveFSM::RangeSensor_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
 {
 
 	/*

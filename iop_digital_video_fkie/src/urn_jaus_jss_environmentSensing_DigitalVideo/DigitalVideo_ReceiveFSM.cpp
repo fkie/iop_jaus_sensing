@@ -21,22 +21,22 @@ along with this program; or you can read the full license at
 /** \author Alexander Tiderko */
 
 
-#include "urn_jaus_jss_environmentSensing_DigitalVideo_1_0/DigitalVideo_ReceiveFSM.h"
+#include "urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.h"
 
 
 
 
 using namespace JTS;
-using namespace urn_jaus_jss_core_DiscoveryClient_1_0;
-using namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient_1_0;
+using namespace urn_jaus_jss_core_DiscoveryClient;
+using namespace urn_jaus_jss_iop_DigitalResourceDiscoveryClient;
 using namespace digital_resource_endpoint;
 
-namespace urn_jaus_jss_environmentSensing_DigitalVideo_1_0
+namespace urn_jaus_jss_environmentSensing_DigitalVideo
 {
 
 static unsigned short sensor_id = 1;
 
-DigitalVideo_ReceiveFSM::DigitalVideo_ReceiveFSM(urn_jaus_jss_core_Transport_1_0::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events_1_0::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl_1_0::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_environmentSensing_VisualSensor_1_0::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM)
+DigitalVideo_ReceiveFSM::DigitalVideo_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_environmentSensing_VisualSensor::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM)
 {
 
 	/*

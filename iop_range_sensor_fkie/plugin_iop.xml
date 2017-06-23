@@ -1,5 +1,5 @@
 <library path="libiop_range_sensor_fkie">
-  <class name="RangeSensor_1_0" type="iop::RangeSensorPlugin_1_0" base_class_type="iop::PluginInterface">
+  <class name="RangeSensor" type="iop::RangeSensorPlugin" base_class_type="iop::PluginInterface">
     <description>
       RangeSensorService Plugin
     </description>
