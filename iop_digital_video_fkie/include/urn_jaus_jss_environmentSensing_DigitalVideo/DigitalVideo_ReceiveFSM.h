@@ -46,8 +46,8 @@ typedef JTS::Send Send;
 
 #include <ros/ros.h>
 #include <std_msgs/String.h>
-#include "DigitalResourceEndpoint.h"
-#include "iop_component_fkie/iop_component.h"
+#include <iop_digital_resource_discovery_fkie/DigitalResourceEndpoint.h>
+#include <iop_component_fkie/iop_component.h>
 
 namespace urn_jaus_jss_environmentSensing_DigitalVideo
 {
