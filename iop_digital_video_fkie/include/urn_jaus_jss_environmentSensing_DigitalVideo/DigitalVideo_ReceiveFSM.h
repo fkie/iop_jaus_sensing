@@ -31,8 +31,8 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_environmentSensing_DigitalVideo/Messages/MessageSet.h"
 #include "urn_jaus_jss_environmentSensing_DigitalVideo/InternalEvents/InternalEventsSet.h"
 
-typedef JTS::Receive Receive;
-typedef JTS::Send Send;
+#include "InternalEvents/Receive.h"
+#include "InternalEvents/Send.h"
 
 #include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 #include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
