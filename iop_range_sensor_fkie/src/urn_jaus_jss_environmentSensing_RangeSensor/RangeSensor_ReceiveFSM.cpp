@@ -23,6 +23,7 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_environmentSensing_RangeSensor/RangeSensor_ReceiveFSM.h"
 #include <iostream>
 #include <string>
+#include <libgen.h>
 #include "include/Iop_range_sensor_fkie.h"
 #include "JausUtils.h"
 #include <sensor_msgs/LaserScan.h>
@@ -118,7 +119,7 @@ RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(int id, std::string topic, Rang
 	this->ros_sub = nh.subscribe(topic, 1, &RangeSensor_ReceiveFSM::scan_callback, parent);
 	ReportRangeSensorCapabilities::Body::RangeSensorCapabilitiesList::RangeSensorCapabilitiesRec caprec;
 	caprec.setSensorID(id);
-	caprec.setSensorName(topic);
+	caprec.setSensorName(std::string(basename((char *)topic.c_str())));
 	caprec.getSupportedCompression()->setNoCompression(1);
 	this->capabilities.getBody()->getRangeSensorCapabilitiesList()->addElement(caprec);
 	ReportRangeSensorConfiguration::Body::RangeSensorConfigurationList::RangeSensorConfigurationRec cfgrec;
