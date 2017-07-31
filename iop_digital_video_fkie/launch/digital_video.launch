@@ -19,6 +19,8 @@
         </rosparam>
         <param name="iop_address" value="$(arg id_subsystem).$(arg id_node).50"/>
         <param name="enable_ros_interface" value="false"/>
+        <!-- list with video streams. Format: "ID/Type of source": "URL".
+          Example for RTSP stream: "0/rtsp" : "rtsp://URL" -->
         <rosparam param="video_endpoints">
           "0/rtsp_topic" : "/mapbox/map_image/rtsp"
         </rosparam>

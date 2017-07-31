@@ -79,52 +79,102 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 	p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService*>(iop::Component::get_instance().get_service("DigitalResourceDiscoveryClient"));
 	if (p_ds_discovery_client_service == NULL)
 		throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");
-	ros::NodeHandle n;
 	ros::NodeHandle pnh("~");
 	std::string rtsp_topic = "";
 	std::string mjpeg_uri = "";
-	XmlRpc::XmlRpcValue endpoints;
-	pnh.getParam("video_endpoints", endpoints);
-	if (endpoints.getType() != XmlRpc::XmlRpcValue::TypeStruct) {
-		ROS_ERROR("wrong '~video_endpoints' format, expected: ID/TYPE/URL.\n  ID: ressource id {0..254}\n  TYPE: server type {rtsp_topic, rtsp, http}");
+	XmlRpc::XmlRpcValue video_endpoints;
+	pnh.getParam("video_endpoints", video_endpoints);
+	if (!video_endpoints.valid()) {
+		ROS_ERROR("wrong '~video_endpoints' format, expected list of: ID/TYPE: URL.\n  ID: ressource id {0..254}\n  TYPE: server type {rtsp_topic, rtsp, http, https, ftp, sftp, ftp_ssh, scp, mpeg2ts}");
 		ROS_BREAK();
 	}
-	ROS_ASSERT(endpoints.getType() == XmlRpc::XmlRpcValue::TypeStruct);
-	for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it = endpoints.begin(); it != endpoints.end(); ++it) {
-		ROS_INFO_STREAM("Found digital endpoint: " << (std::string)(it->first) << " ==> " << endpoints[it->first]);
-		std::string ep_id_str = (std::string)(it->first);
-		int ep_id = std::atoi(ep_id_str.c_str());
-		if (endpoints[it->first].getType() != XmlRpc::XmlRpcValue::TypeStruct) {
-			ROS_ERROR("wrong '~video_endpoints' format, expected: ID/TYPE/URL.\n  ID: int value 0-254\n  TYPE: {rtsp_topic, rtsp, http}");
-			ROS_BREAK();
-		}
-		ROS_ASSERT(endpoints[it->first].getType() == XmlRpc::XmlRpcValue::TypeStruct);
-		for(XmlRpc::XmlRpcValue::ValueStruct::const_iterator it2 = endpoints[it->first].begin(); it2!= endpoints[it->first].end(); ++it2) {
-			std::string ep_type = (std::string)(it2->first);
-			std::string ep_addr = (std::string)(endpoints[it->first][it2->first]);
-			ROS_INFO_STREAM("  type: " << ep_type << " ==> " << endpoints[it->first][it2->first]);
-			DigitalResourceEndpoint endpoint;
-			if (ep_type.compare("rtsp_topic") == 0) {
-				endpoint.resource_id = ep_id;
-				endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
-				ROS_INFO("    get RTPS from topic: %s", ep_addr.c_str());
-				p_topics_map[ep_addr] = ep_id;
-				p_endpoints[ep_id] = endpoint;
-				p_subscriber[ep_addr] = n.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
-			} else if (ep_type.compare("rtsp") == 0) {
-				endpoint.resource_id = ep_id;
-				endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
-				ROS_INFO("    RTPS: %s", ep_addr.c_str());
-				p_endpoints[ep_id] = endpoint;
-			} else if (ep_type.compare("http") == 0) {
-				endpoint.resource_id = ep_id;
-				endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_HTTP;
-				ROS_INFO("    HTTP: %s", ep_addr.c_str());
-				p_endpoints[ep_id] = endpoint;
+	// parse the parameter into a map
+	std::map<std::string, std::string > endpoints_list;
+	for(int i = 0; i < video_endpoints.size(); i++) {
+		if (video_endpoints[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
+			for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = video_endpoints[i].begin(); iterator != video_endpoints[i].end(); iterator++) {
+				std::string vi_type = iterator->first;
+				std::string vi_uri = iterator->second;
+				endpoints_list[vi_type] = vi_uri;
 			}
+		} else {
+			ROS_ERROR("wrong entry of '~video_endpoints', expected: ID/TYPE/URL.\n  ID: int value 0-254\n  TYPE: {rtsp_topic, rtsp, http, https, ftp, sftp, ftp_ssh, scp, mpeg2ts}");
 		}
 	}
 
+	for(std::map<std::string, std::string >::const_iterator it = endpoints_list.begin(); it != endpoints_list.end(); ++it) {
+		std::string delimiter = "/";
+		size_t pos = 0;
+		std::string ep_type = it->first;
+		std::string ep_id_str;
+		if ((pos = ep_type.find(delimiter)) != std::string::npos) {
+			ep_id_str = ep_type.substr(0, pos);
+			ep_type.erase(0, pos + delimiter.length());
+		} else {
+			ROS_ERROR("wrong type definition format, expected : ID/TYPE [ID: ressource id {0..254} TYPE: server type {rtsp_topic, rtsp, http, https, ftp, sftp, ftp_ssh, scp, mpeg2ts}], found: %s", ep_type.c_str());
+		}
+		int ep_id = std::atoi(ep_id_str.c_str());
+		ROS_INFO_STREAM("Found digital endpoint: " << (std::string)(it->first) << " ==> " << it->second);
+		std::string ep_addr = (std::string)(it->second);
+		ROS_INFO_STREAM("  type: " << ep_type << " ==> " << ep_addr);
+		DigitalResourceEndpoint endpoint;
+		if (ep_type.compare("rtsp_topic") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
+			ROS_INFO("    get RTPS from topic: %s", ep_addr.c_str());
+			p_topics_map[ep_addr] = ep_id;
+			p_endpoints[ep_id] = endpoint;
+			p_subscriber[ep_addr] = n.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
+		} else if (ep_type.compare("rtsp") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    RTPS: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("http") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_HTTP;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    HTTP: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("https") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_HTTPS;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    HTTPS: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("ftp") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_FTP;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    FTP: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("sftp") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_SFTP;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    SFTP: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("ftp_ssh") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_FTP_SSH;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    SFTP: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("scp") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_SCP;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    SCP: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		} else if (ep_type.compare("mpeg2ts") == 0) {
+			endpoint.resource_id = ep_id;
+			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_MPEG2TS;
+			endpoint.server_url = ep_addr;
+			ROS_INFO("    MPEG2TS: %s", ep_addr.c_str());
+			p_endpoints[ep_id] = endpoint;
+		}
+	}
 	p_discovery_client_service->pDiscoveryClient_ReceiveFSM->discover("urn:jaus:jss:iop:DigitalResourceDiscovery", &DigitalVideo_ReceiveFSM::discovered, this, 1, 0, jausRouter->getJausAddress()->getSubsystemID());
 }
 
@@ -196,44 +246,46 @@ bool DigitalVideo_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec tran
 
 void DigitalVideo_ReceiveFSM::discovered(const std::string &service_uri, JausAddress &iop_address)
 {
-  ROS_INFO("discovered %s @ %d.%d.%d", service_uri.c_str(), iop_address.getSubsystemID(), iop_address.getNodeID(), iop_address.getComponentID());
-  p_digital_resource_discovery_addr = iop_address;
-  for (std::map<int, DigitalResourceEndpoint>::iterator it = p_endpoints.begin(); it != p_endpoints.end(); ++it) {
-    pRegisterVideo(it->second);
-  }
+	ROS_INFO_NAMED("DigitalVideo", "discovered %s @ %d.%d.%d", service_uri.c_str(), iop_address.getSubsystemID(), iop_address.getNodeID(), iop_address.getComponentID());
+	if (p_digital_resource_discovery_addr.get() != iop_address.get()) {
+		p_digital_resource_discovery_addr = iop_address;
+		for (std::map<int, DigitalResourceEndpoint>::iterator it = p_endpoints.begin(); it != p_endpoints.end(); ++it) {
+			pRegisterVideo(it->second);
+		}
+	}
 }
 
 void DigitalVideo_ReceiveFSM::ros_video_rtsp_handler(const ros::MessageEvent<const std_msgs::String >& event)
 {
-  /*
-   * Store the URL of the rtsp stream. This will be returned by discovering.
-   */
-  const std_msgs::String& msg = *event.getMessage();
-  std::string topic_name = event.getConnectionHeader()["topic"];
-  std::map<std::string, int>::iterator it = p_topics_map.find(topic_name);
-  if (it != p_topics_map.end()) {
-    p_endpoints[p_topics_map[topic_name]].server_url = msg.data;
-    ROS_INFO("received RTSP URL: %s\n", msg.data.c_str());
-    pRegisterVideo(p_endpoints[p_topics_map[topic_name]]);
-  }
+	/*
+	* Store the URL of the rtsp stream. This will be returned by discovering.
+	*/
+	const std_msgs::String& msg = *event.getMessage();
+	std::string topic_name = event.getConnectionHeader()["topic"];
+	std::map<std::string, int>::iterator it = p_topics_map.find(topic_name);
+	if (it == p_topics_map.end()) {
+		p_endpoints[p_topics_map[topic_name]].server_url = msg.data;
+		ROS_INFO_NAMED("DigitalVideo", "received RTSP URL: %s\n", msg.data.c_str());
+		pRegisterVideo(p_endpoints[p_topics_map[topic_name]]);
+	}
 }
 
 void DigitalVideo_ReceiveFSM::pRegisterVideo(DigitalResourceEndpoint endpoint)
 {
-  if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
-    ROS_INFO("register video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
-    endpoint.iop_id = *(jausRouter->getJausAddress());
-    p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->registerEndpoint(endpoint, p_digital_resource_discovery_addr);
-  }
+	if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
+		ROS_INFO_NAMED("DigitalVideo", "register video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
+		endpoint.iop_id = *(jausRouter->getJausAddress());
+		p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->registerEndpoint(endpoint, p_digital_resource_discovery_addr);
+	}
 }
 
 void DigitalVideo_ReceiveFSM::pUnregisterVideo(DigitalResourceEndpoint endpoint)
 {
-  if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
-    ROS_INFO("unregister video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
-    endpoint.iop_id = *(jausRouter->getJausAddress());
-    p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->unregisterEndpoint(endpoint, p_digital_resource_discovery_addr);
-  }
+	if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
+		ROS_INFO_NAMED("DigitalVideo", "unregister video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
+		endpoint.iop_id = *(jausRouter->getJausAddress());
+		p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->unregisterEndpoint(endpoint, p_digital_resource_discovery_addr);
+	}
 }
 
 
