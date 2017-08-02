@@ -1,19 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(iop_digital_video_fkie)
+project(iop_visual_sensor_fkie)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
              iop_accesscontrol_fkie
-             iop_digital_resource_discovery_fkie
              iop_discovery_fkie
-             iop_visual_sensor_fkie
              roscpp
-             sensor_msgs
              )
 iop_init(COMPONENT_ID 81)
-iop_export_service(urn_jaus_jss_environmentSensing_DigitalVideo)
+iop_export_service(urn_jaus_jss_environmentSensing_VisualSensor)
 
 
 ###################################
@@ -23,10 +20,7 @@ catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         iop_accesscontrol_fkie
-        iop_digital_resource_discovery_fkie
         iop_discovery_fkie
-        iop_visual_sensor_fkie
-        sensor_msgs
 )
 
 ###########
@@ -40,20 +34,16 @@ iop_code_generator(
     urn.jaus.jss.core-v1.0/Events.xml
     urn.jaus.jss.core-v1.0/EventsClient.xml
     urn.jaus.jss.core-v1.0/Transport.xml
-    urn.jaus.jss.environmentSensing/DigitalVideo.xml
     urn.jaus.jss.environmentSensing/VisualSensor.xml
-    urn.jaus.jss.iop/DigitalResourceDiscoveryClient_v1.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.h
-    src/urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.cpp
+    src/urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.cpp
     src/main.cpp
   EXTERN_SERVICES
     urn_jaus_jss_core_Events
     urn_jaus_jss_core_EventsClient
     urn_jaus_jss_core_AccessControl
     urn_jaus_jss_core_Transport
-    urn_jaus_jss_iop_DigitalResourceDiscoveryClient
   GENERATED_SOURCES cppfiles
 )
 
@@ -61,7 +51,7 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 )
 add_library(${PROJECT_NAME}
-            src/DigitalVideoPlugin.cpp
+            src/VisualSensorPlugin.cpp
             ${cppfiles}
 )
 

@@ -1,0 +1,10 @@
+<library path="libiop_visual_sensor_fkie">
+  <class name="VisualSensor" type="iop::VisualSensorPlugin" base_class_type="iop::PluginInterface">
+    <description>
+      VisualSensor Service Plugin
+    </description>
+    <iop_service name="VisualSensor" id="urn:jaus:jss:environmentSensing:VisualSensor" version="1.0">
+      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.0"/>
+    </iop_service>
+  </class>
+</library>
