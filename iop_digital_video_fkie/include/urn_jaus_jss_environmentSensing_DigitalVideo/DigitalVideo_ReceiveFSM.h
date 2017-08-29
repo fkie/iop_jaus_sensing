@@ -46,6 +46,7 @@ along with this program; or you can read the full license at
 
 #include <ros/ros.h>
 #include <std_msgs/String.h>
+#include <std_msgs/UInt16.h>
 #include <iop_digital_resource_discovery_fkie/DigitalResourceEndpoint.h>
 #include <iop_component_fkie/iop_component.h>
 
@@ -91,6 +92,7 @@ protected:
 	std::map<int, digital_resource_endpoint::DigitalResourceEndpoint> p_endpoints;
 	std::map<std::string, int> p_topics_map;
 	std::map<std::string, ros::Subscriber> p_subscriber;
+	ros::Publisher p_pub_ressource_id;
 
 	void discovered(const std::string &service_uri, JausAddress &iop_address);
 	void pRegisterVideo(digital_resource_endpoint::DigitalResourceEndpoint endpoint);

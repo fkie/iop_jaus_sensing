@@ -73,6 +73,7 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready", "DigitalVideo_ReceiveFSM");
 	registerNotification("Receiving", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving", "DigitalVideo_ReceiveFSM");
 
+	p_pub_ressource_id = n.advertise<std_msgs::UInt16>("dv_resource_id", 10, true);
 	p_discovery_client_service = dynamic_cast<DiscoveryClientService*>(iop::Component::get_instance().get_service("DiscoveryClient"));
 	if (p_discovery_client_service == NULL)
 		throw std::runtime_error("DiscoveryClientService not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
@@ -181,8 +182,16 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigitalVideoSensorStream msg)
 {
 	/// Insert User Code HERE
-	printf("[DigitalVideo] modifyDigitalVideoSensorStreamAction not implemented\n");
-}
+	unsigned short id = msg.getBody()->getControlDigitalVideoSensorStreamRec()->getSensorID();
+	ROS_DEBUG_NAMED("DigitalVideo", "modifyDigitalVideoSensorStreamAction resource %d", id);
+	if (msg.getBody()->getControlDigitalVideoSensorStreamRec()->getStreamState() == 2) {
+		id = 65535;
+	} else if (msg.getBody()->getControlDigitalVideoSensorStreamRec()->getStreamState() == 0) {
+	}
+	std_msgs::UInt16 cmd;
+	cmd.data = id;
+	p_pub_ressource_id.publish(cmd);
+
 
 void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
