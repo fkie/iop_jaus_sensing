@@ -191,7 +191,7 @@ void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigita
 	std_msgs::UInt16 cmd;
 	cmd.data = id;
 	p_pub_ressource_id.publish(cmd);
-
+}
 
 void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
