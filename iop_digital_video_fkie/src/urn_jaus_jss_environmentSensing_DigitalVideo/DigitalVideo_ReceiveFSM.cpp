@@ -272,7 +272,7 @@ void DigitalVideo_ReceiveFSM::ros_video_rtsp_handler(const ros::MessageEvent<con
 	const std_msgs::String& msg = *event.getMessage();
 	std::string topic_name = event.getConnectionHeader()["topic"];
 	std::map<std::string, int>::iterator it = p_topics_map.find(topic_name);
-	if (it == p_topics_map.end()) {
+	if (it != p_topics_map.end()) {
 		p_endpoints[p_topics_map[topic_name]].server_url = msg.data;
 		ROS_INFO_NAMED("DigitalVideo", "received RTSP URL: %s\n", msg.data.c_str());
 		pRegisterVideo(p_endpoints[p_topics_map[topic_name]]);
