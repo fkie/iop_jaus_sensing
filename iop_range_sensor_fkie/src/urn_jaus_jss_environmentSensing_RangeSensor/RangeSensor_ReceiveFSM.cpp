@@ -173,9 +173,9 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 			bool geo_init = false;
 			try {
 				if (!p_tf_frame_robot.empty()) {
-					tfListener.waitForTransform(msg->header.frame_id, p_tf_frame_robot, ros::Time(0), ros::Duration(0.3));
+					tfListener.waitForTransform(p_tf_frame_robot, msg->header.frame_id, ros::Time(0), ros::Duration(0.3));
 					tf::StampedTransform transform;
-					tfListener.lookupTransform(msg->header.frame_id, p_tf_frame_robot, ros::Time(0), transform);
+					tfListener.lookupTransform(p_tf_frame_robot, msg->header.frame_id, ros::Time(0), transform);
 					ReportSensorGeometricProperties::Body::GeometricPropertiesList::GeometricPropertiesSequence::GeometricPropertiesVariant::StaticGeometricPropertiesRec staticgeo;
 					staticgeo.getSensorPosition()->setPositionVectorElement(0, transform.getOrigin().x());
 					staticgeo.getSensorPosition()->setPositionVectorElement(1, transform.getOrigin().y());
