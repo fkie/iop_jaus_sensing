@@ -90,7 +90,7 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	pnh.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
 	ROS_INFO("tf_frame_robot: %s", p_tf_frame_robot.c_str());
 	XmlRpc::XmlRpcValue v;
-	int sensor_id = 0;
+	int sensor_id = 1;  // id 0 is reserved for all
 	pnh.param("sensors", v, v);
 	ROS_INFO("Used sensors:");
 	p_mutex.lock();
@@ -246,7 +246,8 @@ bool p_requested_capability(QueryRangeSensorCapabilities msg, int id)
 		return true;
 	}
 	for (unsigned int i = 0; i < msg.getBody()->getRangeSensorCapabilitiesList()->getNumberOfElements(); i++) {
-		if (msg.getBody()->getRangeSensorCapabilitiesList()->getElement(i)->getSensorID() == 0) {
+		unsigned short requsted_id = msg.getBody()->getRangeSensorCapabilitiesList()->getElement(i)->getSensorID();
+		if (requsted_id == 0 || requsted_id == 65535) {
 			return true;
 		}
 		if (id == msg.getBody()->getRangeSensorCapabilitiesList()->getElement(i)->getSensorID()) {
@@ -262,7 +263,8 @@ bool p_requested_configuration(QueryRangeSensorConfiguration msg, int id)
 		return true;
 	}
 	for (unsigned int i = 0; i < msg.getBody()->getRangeSensorConfigurationList()->getNumberOfElements(); i++) {
-		if (msg.getBody()->getRangeSensorConfigurationList()->getElement(i)->getSensorID() == 0) {
+		unsigned short requsted_id = msg.getBody()->getRangeSensorConfigurationList()->getElement(i)->getSensorID();
+		if (requsted_id == 0 || requsted_id == 65535) {
 			return true;
 		}
 		if (id == msg.getBody()->getRangeSensorConfigurationList()->getElement(i)->getSensorID()) {
@@ -278,7 +280,8 @@ bool p_requested_sensor_data(QueryRangeSensorData msg, int id)
 		return true;
 	}
 	for (unsigned int i = 0; i < msg.getBody()->getQueryRangeSensorDataList()->getNumberOfElements(); i++) {
-		if (msg.getBody()->getQueryRangeSensorDataList()->getElement(i)->getSensorID() == 0) {
+		unsigned short requsted_id = msg.getBody()->getQueryRangeSensorDataList()->getElement(i)->getSensorID();
+		if (requsted_id == 0 || requsted_id == 65535) {
 			return true;
 		}
 		if (id == msg.getBody()->getQueryRangeSensorDataList()->getElement(i)->getSensorID()) {
@@ -294,7 +297,8 @@ bool p_requested_geometric_properties_data(QuerySensorGeometricProperties msg, i
 		return true;
 	}
 	for (unsigned int i = 0; i < msg.getBody()->getSensorIdList()->getNumberOfElements(); i++) {
-		if (msg.getBody()->getSensorIdList()->getElement(i)->getSensorID() == 0) {
+		unsigned short requsted_id = msg.getBody()->getSensorIdList()->getElement(i)->getSensorID();
+		if (requsted_id == 0 || requsted_id == 65535) {
 			return true;
 		}
 		if (id == msg.getBody()->getSensorIdList()->getElement(i)->getSensorID()) {
