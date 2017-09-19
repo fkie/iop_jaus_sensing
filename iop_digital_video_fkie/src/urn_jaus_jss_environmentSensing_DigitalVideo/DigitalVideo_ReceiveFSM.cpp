@@ -176,7 +176,28 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 			p_endpoints[ep_id] = endpoint;
 		}
 	}
+	XmlRpc::XmlRpcValue video_names;
+	pnh.getParam("video_names", video_names);
+	if (!video_names.valid()) {
+		ROS_ERROR("wrong '~video_names' format, expected list of: ID: NAME");
+		ROS_BREAK();
+	}
+	// parse the parameter into a map
+	std::map<unsigned short, std::string > video_name_list;
+	for(int i = 0; i < video_names.size(); i++) {
+		if (video_names[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
+			for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = video_names[i].begin(); iterator != video_names[i].end(); iterator++) {
+				int ep_id = std::atoi(iterator->first.c_str());
+				std::string vi_name = iterator->second;
+				video_name_list[ep_id] = vi_name;
+			}
+		} else {
+			ROS_ERROR("wrong entry of '~video_names' format, expected list of: ID: NAME");
+		}
+	}
+	pVisualSensor_ReceiveFSM->set_sensor_names(video_name_list);
 	p_discovery_client_service->pDiscoveryClient_ReceiveFSM->discover("urn:jaus:jss:iop:DigitalResourceDiscovery", &DigitalVideo_ReceiveFSM::discovered, this, 1, 0, jausRouter->getJausAddress()->getSubsystemID());
+
 }
 
 void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigitalVideoSensorStream msg)

@@ -220,7 +220,7 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 		ts.setMilliseconds(stamp.milliseconds);
 		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setSensorID(sensor->id);
 		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setTimeStamp(ts);
-		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setReportCoordinateSystem(0);
+		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setReportCoordinateSystem(1);
 		// set points
 		ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant::RangeSensorDataSeq::RangeSensorDataPointList::RangeSensorDataPointRec point;
 		for (unsigned int i = 0; i < msg->ranges.size(); ++i) {
@@ -228,8 +228,12 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 			if (std::isnan(msg->ranges[i])) {
 				point.setRangeValidity(0);
 			} else {
-				point.setRange(msg->ranges[i]);
-				point.setRangeValidity(1);
+				int res = point.setRange(msg->ranges[i]);
+				if (res == 0) {
+					point.setRangeValidity(1);
+				} else {
+					point.setRangeValidity(0);
+				}
 			}
 			point.setInclination(0.0);
 			sdatavar.getRangeSensorDataSeq()->getRangeSensorDataPointList()->addElement(point);

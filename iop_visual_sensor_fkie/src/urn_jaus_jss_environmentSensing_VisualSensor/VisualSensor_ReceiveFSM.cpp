@@ -77,6 +77,11 @@ void VisualSensor_ReceiveFSM::setupNotifications()
 
 }
 
+void VisualSensor_ReceiveFSM::set_sensor_names(std::map<unsigned short, std::string> names)
+{
+	p_sensor_names = names;
+}
+
 void VisualSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetVisualSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
@@ -85,6 +90,7 @@ void VisualSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetVisualSens
 	uint8_t component_id = transportData.getSrcComponentID();
 	JausAddress sender(subsystem_id, node_id, component_id);
 	ROS_DEBUG_NAMED("VisualSensor", "sendConfirmSensorConfigurationAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	request_id = msg.getBody()->getVisualSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
 	ConfirmSensorConfiguration response;
 	response.getBody()->getConfirmSensorConfigurationSequence()->getRequestIdRec()->setRequestID(request_id);
 	sendJausMessage(response,sender);
@@ -111,6 +117,13 @@ void VisualSensor_ReceiveFSM::sendReportVisualSensorCapabilitiesAction(QueryVisu
 	JausAddress sender(subsystem_id, node_id, component_id);
 	ROS_DEBUG_NAMED("VisualSensor", "sendReportVisualSensorCapabilitiesAction to %d.%d.%d (default cfg)", subsystem_id, node_id, component_id);
 	ReportVisualSensorCapabilities response;
+	std::map<unsigned short, std::string>::iterator it;
+	for (it = p_sensor_names.begin(); it != p_sensor_names.end(); it++) {
+		ReportVisualSensorCapabilities::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec entry;
+		entry.setSensorID(it->first);
+		entry.setSensorName(it->second);
+		response.getBody()->getVisualSensorCapabilitiesList()->addElement(entry);
+	}
 	sendJausMessage(response,sender);
 }
 
@@ -123,6 +136,12 @@ void VisualSensor_ReceiveFSM::sendReportVisualSensorConfigurationAction(QueryVis
 	JausAddress sender(subsystem_id, node_id, component_id);
 	ROS_DEBUG_NAMED("VisualSensor", "sendReportVisualSensorConfigurationAction to %d.%d.%d (default cfg)", subsystem_id, node_id, component_id);
 	ReportVisualSensorConfiguration response;
+	std::map<unsigned short, std::string>::iterator it;
+	for (it = p_sensor_names.begin(); it != p_sensor_names.end(); it++) {
+		ReportVisualSensorConfiguration::Body::VisualSensorConfigurationList::VisualSensorConfigurationRec entry;
+		entry.setSensorID(it->first);
+		response.getBody()->getVisualSensorConfigurationList()->addElement(entry);
+	}
 	sendJausMessage(response,sender);
 }
 

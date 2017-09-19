@@ -53,6 +53,7 @@ iop_code_generator(
     urn_jaus_jss_core_EventsClient
     urn_jaus_jss_core_AccessControl
     urn_jaus_jss_core_Transport
+    urn_jaus_jss_environmentSensing_VisualSensor
     urn_jaus_jss_iop_DigitalResourceDiscoveryClient
   GENERATED_SOURCES cppfiles
 )

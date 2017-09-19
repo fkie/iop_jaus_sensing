@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
              iop_discovery_fkie
              roscpp
              )
-iop_init(COMPONENT_ID 81)
+iop_init(COMPONENT_ID 0)
 iop_export_service(urn_jaus_jss_environmentSensing_VisualSensor)
 
 
@@ -37,6 +37,7 @@ iop_code_generator(
     urn.jaus.jss.environmentSensing/VisualSensor.xml
   OWN_IDLS
   OVERRIDES
+    include/urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.h
     src/urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.cpp
     src/main.cpp
   EXTERN_SERVICES
