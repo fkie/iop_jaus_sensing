@@ -75,11 +75,29 @@ void VisualSensor_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "VisualSensor_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "VisualSensor_ReceiveFSM");
 
-}
-
-void VisualSensor_ReceiveFSM::set_sensor_names(std::map<unsigned short, std::string> names)
-{
-	p_sensor_names = names;
+	ros::NodeHandle pnh("~");
+	XmlRpc::XmlRpcValue sensor_names;
+	ROS_INFO_NAMED("VisualSensor", "~sensor_names:");
+	if (pnh.hasParam("sensor_names")) {
+		pnh.getParam("sensor_names", sensor_names);
+		if (!sensor_names.valid()) {
+			ROS_ERROR("wrong '~sensor_names' format, expected list of: ID: NAME");
+			ROS_BREAK();
+		}
+		// parse the parameter into a map
+		for(int i = 0; i < sensor_names.size(); i++) {
+			if (sensor_names[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
+				for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = sensor_names[i].begin(); iterator != sensor_names[i].end(); iterator++) {
+					int ep_id = std::atoi(iterator->first.c_str());
+					std::string vi_name = iterator->second;
+					p_sensor_names[ep_id] = vi_name;
+					ROS_INFO_NAMED("VisualSensor", "  %d: %s", ep_id, vi_name.c_str());
+				}
+			} else {
+				ROS_ERROR("wrong entry of '~sensor_names' format, expected list of: ID: NAME");
+			}
+		}
+	}
 }
 
 void VisualSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetVisualSensorConfiguration msg, Receive::Body::ReceiveRec transportData)

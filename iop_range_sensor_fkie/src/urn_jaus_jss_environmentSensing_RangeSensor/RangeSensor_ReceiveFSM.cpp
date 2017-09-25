@@ -88,18 +88,18 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	ros::NodeHandle nh;
 	ros::NodeHandle pnh("~");
 	pnh.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
-	ROS_INFO("tf_frame_robot: %s", p_tf_frame_robot.c_str());
+	ROS_INFO_NAMED("RangeSensor", "tf_frame_robot: %s", p_tf_frame_robot.c_str());
 	XmlRpc::XmlRpcValue v;
 	int sensor_id = 1;  // id 0 is reserved for all
 	pnh.param("sensors", v, v);
-	ROS_INFO("Used sensors:");
+	ROS_INFO_NAMED("RangeSensor", "Used sensors:");
 	p_mutex.lock();
 	if (v.getType() == XmlRpc::XmlRpcValue::TypeArray) {
 		for(unsigned int i = 0; i < v.size(); i++) {
 			std::string ros_topic = v[i];
 			// resolve to node namespace
 			std::string ros_topic_resolved = ros::names::resolve(ros_topic);
-			ROS_INFO("  create subscriber for %s", ros_topic_resolved.c_str());
+			ROS_INFO_NAMED("RangeSensor", "  create subscriber for %s", ros_topic_resolved.c_str());
 			RangeSensor *sensor = new RangeSensor(sensor_id, ros_topic_resolved, this);
 			sensor_id++;
 			p_sensors.push_back(sensor);
@@ -314,7 +314,7 @@ bool p_requested_geometric_properties_data(QuerySensorGeometricProperties msg, i
 
 void RangeSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	ROS_WARN("sendConfirmSensorConfigurationAction not implemented yet");
+	ROS_WARN_NAMED("RangeSensor", "sendConfirmSensorConfigurationAction not implemented yet");
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
@@ -335,7 +335,7 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeS
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCompressedDataAction(QueryRangeSensorCompressedData msg, std::string arg0, Receive::Body::ReceiveRec transportData)
 {
-	ROS_WARN("sendReportRangeSensorCompressedDataAction not implemented yet");
+	ROS_WARN_NAMED("RangeSensor", "sendReportRangeSensorCompressedDataAction not implemented yet");
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)

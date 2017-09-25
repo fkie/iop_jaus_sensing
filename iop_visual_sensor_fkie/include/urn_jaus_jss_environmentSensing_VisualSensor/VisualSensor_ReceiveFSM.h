@@ -43,8 +43,6 @@ public:
 	/// Guard Methods
 	virtual bool isControllingClient(Receive::Body::ReceiveRec transportData);
 
-	void set_sensor_names(std::map<unsigned short, std::string> names);
-
 
 	VisualSensor_ReceiveFSMContext *context;
 
