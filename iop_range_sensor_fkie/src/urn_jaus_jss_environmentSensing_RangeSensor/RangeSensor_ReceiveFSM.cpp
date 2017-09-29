@@ -83,7 +83,7 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "RangeSensor_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "RangeSensor_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "RangeSensor_ReceiveFSM");
-
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryRangeSensorData::ID);
 	stop_subscriber();
 	ros::NodeHandle nh;
 	ros::NodeHandle pnh("~");
@@ -240,7 +240,25 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 		}
 		sdatavar.setFieldValue(1);
 		sensor->sensor_data.getBody()->getRangeSensorDataList()->addElement(sdatavar);
-		this->pEvents_ReceiveFSM->set_event_report(0x2803, sensor->sensor_data);
+		// apply query filter
+		std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage> queries;
+		pEvents_ReceiveFSM->get_event_handler().get_queries(QueryRangeSensorData::ID, queries);
+		std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage>::iterator it;
+		for (it = queries.begin(); it != queries.end(); ++it) {
+			QueryRangeSensorData qr;
+			qr.decode(it->second.getData());
+			unsigned int qr_len = qr.getBody()->getQueryRangeSensorDataList()->getNumberOfElements();
+			for (unsigned int q = 0; q < qr_len; q++) {
+				QueryRangeSensorData::Body::QueryRangeSensorDataList::QueryRangeSensorDataRec *qr_rec;
+				qr_rec = qr.getBody()->getQueryRangeSensorDataList()->getElement(q);
+				if (qr_rec->getSensorID() == sensor->id || qr_rec->getSensorID() == 0 || qr_rec->getSensorID() == 65535) {
+					ReportRangeSensorData sensor_data_report;
+					sensor_data_report.getBody()->getRangeSensorDataList()->addElement(sdatavar);
+					pEvents_ReceiveFSM->get_event_handler().send_report(it->first, sensor_data_report, sensor->id);
+				}
+			}
+		}
+//		pEvents_ReceiveFSM->get_event_handler().set_report(QueryRangeSensorData::ID, &sensor->sensor_data);
 	}
 }
 
