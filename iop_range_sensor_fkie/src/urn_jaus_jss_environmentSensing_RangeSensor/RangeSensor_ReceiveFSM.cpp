@@ -32,6 +32,7 @@ along with this program; or you can read the full license at
 #include <tf/transform_listener.h>
 #include <geometry_msgs/Twist.h>
 #include <iop_builder_fkie/timestamp.h>
+#include <iop_component_fkie/iop_config.h>
 
 
 using namespace JTS;
@@ -85,21 +86,18 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "RangeSensor_ReceiveFSM");
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryRangeSensorData::ID);
 	stop_subscriber();
-	ros::NodeHandle nh;
-	ros::NodeHandle pnh("~");
-	pnh.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
-	ROS_INFO_NAMED("RangeSensor", "tf_frame_robot: %s", p_tf_frame_robot.c_str());
+	iop::Config cfg("~RangeSensor");
+	cfg.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
+
 	XmlRpc::XmlRpcValue v;
 	int sensor_id = 1;  // id 0 is reserved for all
-	pnh.param("sensors", v, v);
-	ROS_INFO_NAMED("RangeSensor", "Used sensors:");
+	cfg.param("sensors", v, v);
 	p_mutex.lock();
 	if (v.getType() == XmlRpc::XmlRpcValue::TypeArray) {
 		for(unsigned int i = 0; i < v.size(); i++) {
 			std::string ros_topic = v[i];
 			// resolve to node namespace
 			std::string ros_topic_resolved = ros::names::resolve(ros_topic);
-			ROS_INFO_NAMED("RangeSensor", "  create subscriber for %s", ros_topic_resolved.c_str());
 			RangeSensor *sensor = new RangeSensor(sensor_id, ros_topic_resolved, this);
 			sensor_id++;
 			p_sensors.push_back(sensor);
@@ -115,8 +113,8 @@ RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(int id, std::string topic, Rang
 	this->id = id;
 	this->initialized = false;
 	this->ros_topic = topic;
-	ros::NodeHandle nh;
-	this->ros_sub = nh.subscribe(topic, 1, &RangeSensor_ReceiveFSM::scan_callback, parent);
+	iop::Config cfg("~RangeSensor");
+	this->ros_sub = cfg.subscribe(topic, 1, &RangeSensor_ReceiveFSM::scan_callback, parent);
 	ReportRangeSensorCapabilities::Body::RangeSensorCapabilitiesList::RangeSensorCapabilitiesRec caprec;
 	caprec.setSensorID(id);
 	caprec.setSensorName(std::string(basename((char *)topic.c_str())));

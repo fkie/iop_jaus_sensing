@@ -87,7 +87,6 @@ protected:
 
 	urn_jaus_jss_core_DiscoveryClient::DiscoveryClientService* p_discovery_client_service;
 	urn_jaus_jss_iop_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService *p_ds_discovery_client_service;
-	ros::NodeHandle n;
 	JausAddress p_digital_resource_discovery_addr;
 	std::map<int, digital_resource_endpoint::DigitalResourceEndpoint> p_endpoints;
 	std::map<std::string, int> p_topics_map;

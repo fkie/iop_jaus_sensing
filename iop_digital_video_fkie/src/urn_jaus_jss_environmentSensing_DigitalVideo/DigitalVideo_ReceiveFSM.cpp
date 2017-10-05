@@ -22,6 +22,7 @@ along with this program; or you can read the full license at
 
 
 #include "urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.h"
+#include <iop_component_fkie/iop_config.h>
 
 
 
@@ -72,19 +73,17 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready_Controlled", "DigitalVideo_ReceiveFSM");
 	registerNotification("Receiving_Ready", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready", "DigitalVideo_ReceiveFSM");
 	registerNotification("Receiving", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving", "DigitalVideo_ReceiveFSM");
+	iop::Config cfg("~DigitalVideo");
 
-	p_pub_ressource_id = n.advertise<std_msgs::UInt16>("dv_resource_id", 10, true);
+	p_pub_ressource_id = cfg.advertise<std_msgs::UInt16>("dv_resource_id", 10, true);
 	p_discovery_client_service = dynamic_cast<DiscoveryClientService*>(iop::Component::get_instance().get_service("DiscoveryClient"));
 	if (p_discovery_client_service == NULL)
 		throw std::runtime_error("DiscoveryClientService not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
 	p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService*>(iop::Component::get_instance().get_service("DigitalResourceDiscoveryClient"));
 	if (p_ds_discovery_client_service == NULL)
 		throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");
-	ros::NodeHandle pnh("~");
-	std::string rtsp_topic = "";
-	std::string mjpeg_uri = "";
 	XmlRpc::XmlRpcValue video_endpoints;
-	pnh.getParam("video_endpoints", video_endpoints);
+	cfg.param("video_endpoints", video_endpoints, video_endpoints);
 	if (!video_endpoints.valid()) {
 		ROS_ERROR("wrong '~video_endpoints' format, expected list of: ID/TYPE: URL.\n  ID: ressource id {0..254}\n  TYPE: server type {rtsp_topic, rtsp, http, https, ftp, sftp, ftp_ssh, scp, mpeg2ts}");
 		ROS_BREAK();
@@ -125,7 +124,7 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 			ROS_INFO_NAMED("DigitalVideo", "    get RTPS from topic: %s", ep_addr.c_str());
 			p_topics_map[ep_addr] = ep_id;
 			p_endpoints[ep_id] = endpoint;
-			p_subscriber[ep_addr] = n.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
+			p_subscriber[ep_addr] = cfg.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
 		} else if (ep_type.compare("rtsp") == 0) {
 			endpoint.resource_id = ep_id;
 			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
