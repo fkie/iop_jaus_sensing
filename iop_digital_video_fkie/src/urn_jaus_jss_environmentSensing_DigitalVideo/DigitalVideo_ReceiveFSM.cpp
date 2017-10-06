@@ -122,9 +122,10 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 			endpoint.resource_id = ep_id;
 			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
 			ROS_INFO_NAMED("DigitalVideo", "    get RTPS from topic: %s", ep_addr.c_str());
-			p_topics_map[ep_addr] = ep_id;
 			p_endpoints[ep_id] = endpoint;
-			p_subscriber[ep_addr] = cfg.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
+			ros::Subscriber sub = cfg.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
+			p_topics_map[sub.getTopic()] = ep_id;
+			p_subscriber[sub.getTopic()] = sub;
 		} else if (ep_type.compare("rtsp") == 0) {
 			endpoint.resource_id = ep_id;
 			endpoint.server_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
