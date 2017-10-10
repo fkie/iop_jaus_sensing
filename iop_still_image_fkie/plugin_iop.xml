@@ -1,0 +1,11 @@
+<library path="libiop_still_image_fkie">
+  <class name="StillImage" type="iop::StillImagePlugin" base_class_type="iop::PluginInterface">
+    <description>
+      StillImage Service Plugin
+    </description>
+    <iop_service name="StillImage" id="urn:jaus:jss:environmentSensing:StillImage" version="1.0">
+      <inherits_from id="urn:jaus:jss:environmentSensing:VisualSensor" min_version="1.0"/>
+    </iop_service>
+  </class>
+
+</library>

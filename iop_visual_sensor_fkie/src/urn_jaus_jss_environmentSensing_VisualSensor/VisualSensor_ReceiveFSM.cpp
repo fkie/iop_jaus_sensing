@@ -76,7 +76,6 @@ void VisualSensor_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "VisualSensor_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "VisualSensor_ReceiveFSM");
 	iop::Config cfg("~VisualSensor");
-
 	XmlRpc::XmlRpcValue sensor_names;
 	cfg.param("sensor_names", sensor_names, sensor_names);
 	if (!sensor_names.valid()) {

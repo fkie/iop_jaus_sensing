@@ -1,0 +1,29 @@
+<launch>
+  <arg name="ns" default="myrobot"/>
+  <arg name="id_subsystem" default="133"/>
+  <arg name="id_node" default="64"/>
+  <group ns="$(arg ns)">
+      <node name="iop_digital_video" pkg="iop_component_fkie" type="iop_component">
+        <param name="capability_group" value="iop_bridge"/>
+        <rosparam param="services">
+          [
+            iop_digital_resource_discovery_fkie : "urn:jaus:jss:iop:DigitalResourceDiscoveryClient_1_0",
+            iop_digital_video_fkie: "urn:jaus:jss:environmentSensing:DigitalVideo_1_0",
+            iop_digital_video_fkie: "urn:jaus:jss:environmentSensing:VisualSensor_1_0",
+            iop_discovery_1_0_fkie: "urn:jaus:jss:core:DiscoveryClient_1_0",
+            iop_accesscontrol_1_0_fkie: "urn:jaus:jss:core:AccessControl_1_0",
+            iop_events_1_0_fkie: "urn:jaus:jss:core:Events_1_0",
+            iop_events_1_0_fkie: "urn:jaus:jss:core:EventsClient_1_0",
+            iop_transport_1_0_fkie: "urn:jaus:jss:core:Transport_1_0",
+          ]
+        </rosparam>
+        <param name="iop_address" value="$(arg id_subsystem).$(arg id_node).50"/>
+        <param name="enable_ros_interface" value="false"/>
+        <!-- list with video streams. Format: "ID/image format": "topic".
+          Example for RTSP stream: "1/png" : "compressed_image" -->
+        <rosparam param="sensors">
+          "1" : "/mapbox/map_image/compressed"
+        </rosparam>
+    </node>
+  </group>
+</launch>

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <name>iop_still_image_fkie</name>
+  <version>1.1.0</version>
+  <description>Offers an image service.</description>
+
+  <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
+  <license>GPLv2</license>
+  <url type="website">https://github.com/fkie/iop_jaus_sensing</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>iop_accesscontrol_fkie</build_depend>
+  <build_depend>iop_discovery_fkie</build_depend>
+  <build_depend>iop_visual_sensor_fkie</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>iop_accesscontrol_fkie</run_depend>
+  <run_depend>iop_component_fkie</run_depend>
+  <run_depend>iop_visual_sensor_fkie</run_depend>
+  <run_depend>iop_discovery_fkie</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+
+<export>
+    <iop_component_fkie plugin="${prefix}/plugin_iop.xml" />
+  </export>
+  
+</package>
