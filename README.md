@@ -3,12 +3,11 @@ See [iop_core](https://github.com/fkie/iop_core/blob/master/README.md) for use i
 # Interfaces
 
 List of service plugins in this repository:
-```
-iop_digital_video_fkie: DigitalVideo
-iop_range_sensor_fkie: RangeSensor
-iop_still_image_fkie: StillImage
-iop_visual_sensor_fkie: VisualSensor
-```
+
+[iop_digital_video_fkie: DigitalVideo](#iop_digital_video_fkie-digitalvideo)  
+[iop_range_sensor_fkie: RangeSensor](#iop_range_sensor_fkie-rangesensor)  
+[iop_still_image_fkie: StillImage](#iop_still_image_fkie-stillimage)  
+[iop_visual_sensor_fkie: VisualSensor](#iop_visual_sensor_fkie-visualsensor)
 
 ## _iop_digital_video_fkie:_ DigitalVideo
 
