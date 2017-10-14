@@ -27,8 +27,10 @@ ID is a ressource id of range {1..65534}. 0 and 65534 are reserved. If you inclu
 
 _dv_resource_id (std_msgs::UInt16)_, latched
 
-> Publishes the last played stream id on ControlDigitalVideoSensorStream. On Stop command an value of 65535 is published.
+> Publishes the last played stream sent by JAUS message ControlDigitalVideoSensorStream. On Stop command a value of 65535 is published.
 
 #### Subscriber:
 
 > None
+
+# To be continued ...
