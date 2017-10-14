@@ -33,4 +33,26 @@ _dv_resource_id (std_msgs::UInt16)_, latched
 
 > None
 
+## _iop_range_sensor_fkie:_ RangeSensor
+
+Offers an interface to register video sources by DigitalResourceDiscovery service. Currently no configuration for registered videos source supported.
+
+#### Parameter:
+
+_sensors (list_, (Default: [])
+
+> List of string with topic names. The topics must have a type of sensor_msgs::LaserScan.
+
+_tf_frame_robot (str_, (Default: "base_link")
+
+> ROS Tf to set the ReportSensorGeometricProperties.
+
+#### Publisher:
+
+> None
+
+#### Subscriber:
+
+> _{topics specified in sensors}_ (sensor_msgs::LaserScan)
+
 # To be continued ...
