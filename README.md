@@ -55,4 +55,39 @@ _tf_frame_robot (str_, (Default: "base_link")
 
 > _{topics specified in sensors}_ (sensor_msgs::LaserScan)
 
-# To be continued ...
+## _iop_still_image_fkie:_ StillImage
+
+Translate CompressedImage to IOP network. 
+
+#### Parameter:
+
+_sensors (list_, (Default: [])
+
+> List of pairs of type {ID: ROS topic name}, e.g.: ```"4": map_image/compressed``` The topics must have a type of sensor_msgs::CompressedImage. If you include a DigitalVideo service into your component do not use the same ID. These ID's are used in VisualSensor to merge for a name of the sensor.
+
+#### Publisher:
+
+> None
+
+#### Subscriber:
+
+> _{topics specified in sensors}_ (sensor_msgs::CompressedImage)
+
+## _iop_visual_sensor_fkie:_ VisualSensor
+
+The current functionality is limited to hold names for sensor ID's of StillImage and DigitalVideo services. 
+
+#### Parameter:
+
+_sensor_names (list_, (Default: [])
+
+> List of pairs of type {ID: Name}, e.g.: ```"3": Map```. ID is a ressource id of range {1..65534}. 0 and 65534 are reserved. Name is a string with maximal length of 255 chars.
+
+#### Publisher:
+
+> None
+
+#### Subscriber:
+
+> None
+
