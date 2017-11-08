@@ -124,7 +124,7 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 			ROS_INFO_NAMED("DigitalVideo", "    get RTPS from topic: %s", ep_addr.c_str());
 			p_endpoints[ep_id] = endpoint;
 			ros::Subscriber sub = cfg.subscribe(ep_addr, 1, &DigitalVideo_ReceiveFSM::ros_video_rtsp_handler, this);
-			p_topics_map[sub.getTopic()] = ep_id;
+			p_topics_map[sub.getTopic()].push_back(ep_id);
 			p_subscriber[sub.getTopic()] = sub;
 		} else if (ep_type.compare("rtsp") == 0) {
 			endpoint.resource_id = ep_id;
@@ -272,11 +272,14 @@ void DigitalVideo_ReceiveFSM::ros_video_rtsp_handler(const ros::MessageEvent<con
 	*/
 	const std_msgs::String& msg = *event.getMessage();
 	std::string topic_name = event.getConnectionHeader()["topic"];
-	std::map<std::string, int>::iterator it = p_topics_map.find(topic_name);
+	std::map<std::string, std::vector<int> >::iterator it = p_topics_map.find(topic_name);
 	if (it != p_topics_map.end()) {
-		p_endpoints[p_topics_map[topic_name]].server_url = msg.data;
-		ROS_INFO_NAMED("DigitalVideo", "received RTSP URL: %s\n", msg.data.c_str());
-		pRegisterVideo(p_endpoints[p_topics_map[topic_name]]);
+		for (unsigned int i = 0; i < p_topics_map[topic_name].size(); i++) {
+			int res_id = p_topics_map[topic_name][i];
+			p_endpoints[res_id].server_url = msg.data;
+			ROS_INFO_NAMED("DigitalVideo", "received RTSP URL: %s\n", msg.data.c_str());
+			pRegisterVideo(p_endpoints[res_id]);
+		}
 	}
 }
 

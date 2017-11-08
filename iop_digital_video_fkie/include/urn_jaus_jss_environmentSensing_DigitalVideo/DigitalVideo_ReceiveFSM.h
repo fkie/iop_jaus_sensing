@@ -89,7 +89,7 @@ protected:
 	urn_jaus_jss_iop_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService *p_ds_discovery_client_service;
 	JausAddress p_digital_resource_discovery_addr;
 	std::map<int, digital_resource_endpoint::DigitalResourceEndpoint> p_endpoints;
-	std::map<std::string, int> p_topics_map;
+	std::map<std::string, std::vector<int> > p_topics_map;
 	std::map<std::string, ros::Subscriber> p_subscriber;
 	ros::Publisher p_pub_ressource_id;
 
