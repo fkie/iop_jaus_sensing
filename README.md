@@ -38,7 +38,7 @@ Offers an interface to register video sources by DigitalResourceDiscovery servic
 
 #### Parameter:
 
-_sensors (list_, (Default: [])
+_range_sensors (list_, (Default: [])
 
 > List of string with topic names. The topics must have a type of sensor_msgs::LaserScan.
 

@@ -91,7 +91,7 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 
 	XmlRpc::XmlRpcValue v;
 	int sensor_id = 1;  // id 0 is reserved for all
-	cfg.param("sensors", v, v);
+	cfg.param("range_sensors", v, v);
 	p_mutex.lock();
 	if (v.getType() == XmlRpc::XmlRpcValue::TypeArray) {
 		for(unsigned int i = 0; i < v.size(); i++) {

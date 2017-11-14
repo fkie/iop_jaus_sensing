@@ -22,7 +22,7 @@
         <!-- <param name="tf_frame_robot" value="base_link"/>-->
         <!-- defines the laser sensors. It is a dictinary with frame_id as key and topic as value -->
         <param name="register_own_services" value="true"/>
-        <rosparam param="sensors">[laser_front, laser_rear, laser_turret]</rosparam>
+        <rosparam param="range_sensors">[laser_front, laser_rear, laser_turret]</rosparam>
     </node>
   </group>
 </launch>
