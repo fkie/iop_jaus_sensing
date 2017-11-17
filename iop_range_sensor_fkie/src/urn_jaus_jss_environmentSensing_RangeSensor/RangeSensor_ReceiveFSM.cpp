@@ -136,6 +136,7 @@ RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(int id, std::string topic, Rang
 	ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant datavar;
 	datavar.getRangeSensorDataErrorRec()->setSensorID(id);
 	datavar.getRangeSensorDataErrorRec()->setDataErrorCode(0);
+	datavar.getRangeSensorDataErrorRec()->setErrorMessage("no data available");
 	sensor_data.getBody()->getRangeSensorDataList()->addElement(datavar);
 }
 
@@ -335,11 +336,8 @@ void RangeSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetRangeSensor
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorCapabilities to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorCapabilities to %s", sender.str().c_str());
 	ReportRangeSensorCapabilities response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_capability(msg, p_sensors[idx_sensor]->id)) {
@@ -356,11 +354,8 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorCompressedDataAction(QueryRang
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorConfiguration to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorConfiguration to %s", sender.str().c_str());
 	ReportRangeSensorConfiguration response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_configuration(msg, p_sensors[idx_sensor]->id)) {
@@ -372,11 +367,8 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRange
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorDataAction(QueryRangeSensorData msg, std::string arg0, Receive::Body::ReceiveRec transportData)
 {
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorConfiguration to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorData to %s", sender.str().c_str());
 	ReportRangeSensorData response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_sensor_data(msg, p_sensors[idx_sensor]->id)) {
@@ -388,11 +380,8 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorDataAction(QueryRangeSensorDat
 
 void RangeSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySensorGeometricProperties msg, Receive::Body::ReceiveRec transportData)
 {
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportSensorGeometricProperties to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("RangeSensor", "sendReportSensorGeometricProperties to %s", sender.str().c_str());
 	ReportSensorGeometricProperties response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_geometric_properties_data(msg, p_sensors[idx_sensor]->id)) {
