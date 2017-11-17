@@ -186,6 +186,7 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 					sensor->geometric.getBody()->getGeometricPropertiesList()->getElement(0)->getGeometricPropertiesVariant()->setStaticGeometricPropertiesRec(staticgeo);
 					sensor->geometric.getBody()->getGeometricPropertiesList()->getElement(0)->getGeometricPropertiesVariant()->setFieldValue(1);
 					geo_init = true;
+					ROS_DEBUG_NAMED("RangeSensor", "initialized geometrics for range sensor %s", sensor->ros_topic.c_str());
 				}
 			} catch (tf::TransformException &ex){
 				ROS_WARN_STREAM_THROTTLE(1.0, "Could not lookup transform from " << p_tf_frame_robot << " to " << msg->header.frame_id << ": " << ex.what());
