@@ -32,7 +32,7 @@
                 - "3/rtsp_topic": map_image/rtsp
         StillImage:
             # list with image topics. Format: ID: ROS topic.
-            sensors:
+            image_sensors:
                 - "4": map_image/compressed
         VisualSensor:
             # list with sensor names. Format: ID: name of the sensor.

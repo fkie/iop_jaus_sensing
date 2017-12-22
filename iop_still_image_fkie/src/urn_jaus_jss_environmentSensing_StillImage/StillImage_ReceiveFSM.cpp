@@ -50,9 +50,9 @@ void StillImage_ReceiveFSM::setupNotifications()
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryStillImageData::ID, true);
 	iop::Config cfg("~StillImage");
 	XmlRpc::XmlRpcValue sensors;
-	cfg.param("sensors", sensors, sensors);
+	cfg.param("image_sensors", sensors, sensors);
 	if (!sensors.valid()) {
-		ROS_ERROR_NAMED("StillImage", "wrong '~sensors' format, expected list of: ID: TOPIC.\n  ID: ressource id {0..254}");
+		ROS_ERROR_NAMED("StillImage", "wrong '~image_sensors' format, expected list of: ID: TOPIC.\n  ID: ressource id {0..254}");
 		ROS_BREAK();
 	}
 	// parse the parameter into a map

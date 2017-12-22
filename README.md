@@ -60,7 +60,7 @@ Translate CompressedImage to IOP network.
 
 #### Parameter:
 
-_sensors (list_, (Default: [])
+_image_sensors (list_, (Default: [])
 
 > List of pairs of type {ID: ROS topic name}, e.g.: ```"4": map_image/compressed``` The topics must have a type of sensor_msgs::CompressedImage. If you include a DigitalVideo service into your component do not use the same ID. These ID's are used in VisualSensor to merge for a name of the sensor.
 
@@ -70,7 +70,7 @@ _sensors (list_, (Default: [])
 
 #### Subscriber:
 
-> _{topics specified in sensors}_ (sensor_msgs::CompressedImage)
+> _{topics specified in image_sensors}_ (sensor_msgs::CompressedImage)
 
 ## _iop_visual_sensor_fkie:_ VisualSensor
 
