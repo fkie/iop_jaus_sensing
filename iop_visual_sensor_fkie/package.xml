@@ -11,13 +11,11 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>iop_accesscontrol_fkie</build_depend>
-  <build_depend>iop_discovery_fkie</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>iop_accesscontrol_fkie</run_depend>
   <run_depend>iop_component_fkie</run_depend>
-  <run_depend>iop_discovery_fkie</run_depend>
 
-<export>
+  <export>
     <iop_component_fkie plugin="${prefix}/plugin_iop.xml" />
   </export>
   

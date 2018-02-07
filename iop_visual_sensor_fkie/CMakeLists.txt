@@ -6,7 +6,6 @@ project(iop_visual_sensor_fkie)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
              iop_accesscontrol_fkie
-             iop_discovery_fkie
              roscpp
              )
 iop_init(COMPONENT_ID 0)
@@ -18,9 +17,7 @@ iop_export_service(urn_jaus_jss_environmentSensing_VisualSensor)
 ###################################
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS
-        iop_accesscontrol_fkie
-        iop_discovery_fkie
+    CATKIN_DEPENDS iop_accesscontrol_fkie
 )
 
 ###########
@@ -32,7 +29,6 @@ iop_code_generator(
   IDLS
     urn.jaus.jss.core-v1.0/AccessControl.xml
     urn.jaus.jss.core-v1.0/Events.xml
-    urn.jaus.jss.core-v1.0/EventsClient.xml
     urn.jaus.jss.core-v1.0/Transport.xml
     urn.jaus.jss.environmentSensing/VisualSensor.xml
   OWN_IDLS
@@ -42,7 +38,6 @@ iop_code_generator(
     src/main.cpp
   EXTERN_SERVICES
     urn_jaus_jss_core_Events
-    urn_jaus_jss_core_EventsClient
     urn_jaus_jss_core_AccessControl
     urn_jaus_jss_core_Transport
   GENERATED_SOURCES cppfiles
@@ -67,6 +62,12 @@ target_link_libraries(${PROJECT_NAME}
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+install(
+  DIRECTORY ${IOP_INSTALL_INCLUDE_DIRS} DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+  PATTERN "*.old" EXCLUDE
+  PATTERN "*.gen" EXCLUDE
+)
 
 # Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
