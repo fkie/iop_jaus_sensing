@@ -42,7 +42,6 @@ iop_code_generator(
     urn.jaus.jss.core-v1.0/Transport.xml
     urn.jaus.jss.environmentSensing/DigitalVideo.xml
     urn.jaus.jss.environmentSensing/VisualSensor.xml
-    urn.jaus.jss.iop/DigitalResourceDiscoveryClient_v1.xml
   OWN_IDLS
   OVERRIDES
     include/urn_jaus_jss_environmentSensing_DigitalVideo/DigitalVideo_ReceiveFSM.h
@@ -54,7 +53,6 @@ iop_code_generator(
     urn_jaus_jss_core_AccessControl
     urn_jaus_jss_core_Transport
     urn_jaus_jss_environmentSensing_VisualSensor
-    urn_jaus_jss_iop_DigitalResourceDiscoveryClient
   GENERATED_SOURCES cppfiles
 )
 

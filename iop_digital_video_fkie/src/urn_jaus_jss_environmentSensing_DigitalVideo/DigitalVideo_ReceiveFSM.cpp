@@ -176,7 +176,7 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 			p_endpoints[ep_id] = endpoint;
 		}
 	}
-	p_discovery_client_service->pDiscoveryClient_ReceiveFSM->discover("urn:jaus:jss:iop:DigitalResourceDiscovery", &DigitalVideo_ReceiveFSM::discovered, this, 1, 0, jausRouter->getJausAddress()->getSubsystemID());
+	p_discovery_client_service->pDiscoveryClient_ReceiveFSM->discover("urn:jaus:jss:iop:DigitalResourceDiscovery", &DigitalVideo_ReceiveFSM::discovered, this, 1, 255, jausRouter->getJausAddress()->getSubsystemID());
 
 }
 
