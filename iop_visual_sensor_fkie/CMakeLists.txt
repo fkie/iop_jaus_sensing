@@ -6,8 +6,10 @@ project(iop_visual_sensor_fkie)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
              iop_accesscontrol_fkie
+             iop_component_fkie
              roscpp
-             )
+             std_msgs
+)
 iop_init(COMPONENT_ID 0)
 iop_export_service(urn_jaus_jss_environmentSensing_VisualSensor)
 
@@ -17,7 +19,10 @@ iop_export_service(urn_jaus_jss_environmentSensing_VisualSensor)
 ###################################
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS iop_accesscontrol_fkie
+    CATKIN_DEPENDS
+        iop_accesscontrol_fkie
+        iop_component_fkie
+        std_msgs
 )
 
 ###########

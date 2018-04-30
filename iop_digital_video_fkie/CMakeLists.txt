@@ -6,13 +6,14 @@ project(iop_digital_video_fkie)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
              iop_accesscontrol_fkie
+             iop_component_fkie
              iop_digital_resource_discovery_fkie
              iop_discovery_fkie
              iop_visual_sensor_fkie
              roscpp
-             sensor_msgs
+             std_msgs
              )
-iop_init(COMPONENT_ID 81)
+iop_init(COMPONENT_ID 0)
 iop_export_service(urn_jaus_jss_environmentSensing_DigitalVideo)
 
 
@@ -23,10 +24,11 @@ catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         iop_accesscontrol_fkie
+        iop_component_fkie
         iop_digital_resource_discovery_fkie
         iop_discovery_fkie
         iop_visual_sensor_fkie
-        sensor_msgs
+        std_msgs
 )
 
 ###########

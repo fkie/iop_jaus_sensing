@@ -5,11 +5,16 @@ project(iop_range_sensor_fkie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+                    geometry_msgs
                     iop_accesscontrol_fkie
+                    iop_component_fkie
                     roscpp
                     sensor_msgs
                     tf)
-iop_init(COMPONENT_ID 50)
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS system thread)
+
+iop_init(COMPONENT_ID 0)
 
 ###################################
 ## catkin specific configuration ##
@@ -17,9 +22,14 @@ iop_init(COMPONENT_ID 50)
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
+        geometry_msgs
         iop_accesscontrol_fkie
+        iop_component_fkie
+        roscpp
         sensor_msgs
-        )
+        tf
+    DEPENDS Boost
+)
 
 ###########
 ## Build ##

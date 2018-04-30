@@ -5,13 +5,16 @@ project(iop_still_image_fkie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-             iop_accesscontrol_fkie
-             iop_discovery_fkie
-             iop_visual_sensor_fkie
-             roscpp
-             sensor_msgs
-             )
-iop_init(COMPONENT_ID 81)
+                cv_bridge
+                image_transport
+                iop_accesscontrol_fkie
+                iop_component_fkie
+                iop_discovery_fkie
+                iop_visual_sensor_fkie
+                roscpp
+                sensor_msgs
+)
+iop_init(COMPONENT_ID 0)
 iop_export_service(urn_jaus_jss_environmentSensing_StillImage)
 
 
@@ -21,7 +24,10 @@ iop_export_service(urn_jaus_jss_environmentSensing_StillImage)
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
+        cv_bridge
+        image_transport
         iop_accesscontrol_fkie
+        iop_component_fkie
         iop_discovery_fkie
         iop_visual_sensor_fkie
         sensor_msgs
