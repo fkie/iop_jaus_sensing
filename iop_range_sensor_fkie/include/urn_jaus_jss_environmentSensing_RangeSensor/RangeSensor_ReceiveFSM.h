@@ -96,7 +96,9 @@ protected:
 	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
 
-	boost::recursive_mutex p_mutex;
+	typedef boost::recursive_mutex mutex_type;
+	typedef boost::unique_lock<mutex_type> lock_type;
+	mutable mutex_type p_mutex;
 	std::vector<RangeSensor *> p_sensors;
 	std::string p_tf_frame_robot;
 	tf::TransformListener tfListener;

@@ -92,7 +92,7 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	XmlRpc::XmlRpcValue v;
 	int sensor_id = 1;  // id 0 is reserved for all
 	cfg.param("range_sensors", v, v);
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	if (v.getType() == XmlRpc::XmlRpcValue::TypeArray) {
 		for(unsigned int i = 0; i < v.size(); i++) {
 			std::string ros_topic = v[i];
@@ -105,7 +105,6 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	} else {
 		ROS_WARN("wrong ~sensors parameter type! It should be an array with format [ros_topic, ...]");
 	}
-	p_mutex.unlock();
 }
 
 RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(int id, std::string topic, RangeSensor_ReceiveFSM *parent)
@@ -148,17 +147,16 @@ RangeSensor_ReceiveFSM::RangeSensor::~RangeSensor()
 
 void RangeSensor_ReceiveFSM::stop_subscriber()
 {
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	for (unsigned int i = 0; i < p_sensors.size(); i++) {
 		delete p_sensors[i];
 	}
 	p_sensors.clear();
-	p_mutex.unlock();
 }
 
 void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::LaserScan const>& event)
 {
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	ros::M_string& header = event.getConnectionHeader();
 	ros::Time receipt_time = event.getReceiptTime();
 	const sensor_msgs::LaserScan::ConstPtr &msg = event.getMessage();
@@ -263,7 +261,6 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 		}
 //		pEvents_ReceiveFSM->get_event_handler().set_report(QueryRangeSensorData::ID, &sensor->sensor_data);
 	}
-	p_mutex.unlock();
 }
 
 bool p_requested_capability(QueryRangeSensorCapabilities msg, int id)
@@ -341,7 +338,7 @@ void RangeSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetRangeSensor
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
 	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorCapabilities to %s", sender.str().c_str());
 	ReportRangeSensorCapabilities response;
@@ -351,7 +348,6 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeS
 		}
 	}
 	this->sendJausMessage(response, sender);
-	p_mutex.unlock();
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCompressedDataAction(QueryRangeSensorCompressedData msg, std::string arg0, Receive::Body::ReceiveRec transportData)
@@ -361,7 +357,7 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorCompressedDataAction(QueryRang
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
 	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorConfiguration to %s", sender.str().c_str());
 	ReportRangeSensorConfiguration response;
@@ -371,12 +367,11 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRange
 		}
 	}
 	this->sendJausMessage(response, sender);
-	p_mutex.lock();
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorDataAction(QueryRangeSensorData msg, std::string arg0, Receive::Body::ReceiveRec transportData)
 {
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
 	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorData to %s", sender.str().c_str());
 	ReportRangeSensorData response;
@@ -386,12 +381,11 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorDataAction(QueryRangeSensorDat
 		}
 	}
 	this->sendJausMessage(response, sender);
-	p_mutex.unlock();
 }
 
 void RangeSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySensorGeometricProperties msg, Receive::Body::ReceiveRec transportData)
 {
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
 	ROS_DEBUG_NAMED("RangeSensor", "sendReportSensorGeometricProperties to %s", sender.str().c_str());
 	ReportSensorGeometricProperties response;
@@ -401,7 +395,6 @@ void RangeSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySens
 		}
 	}
 	this->sendJausMessage(response, sender);
-	p_mutex.unlock();
 }
 
 void RangeSensor_ReceiveFSM::updateRangeSensorConfigurationAction()
