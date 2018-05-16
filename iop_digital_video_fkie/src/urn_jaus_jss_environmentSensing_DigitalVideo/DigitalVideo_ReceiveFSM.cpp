@@ -196,12 +196,8 @@ void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigita
 
 void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("DigitalVideo", "sendConfirmSensorConfigurationAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("DigitalVideo", "sendConfirmSensorConfigurationAction to %s", sender.str().c_str());
 	unsigned char request_id = msg.getBody()->getDigitalVideoSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
 	ConfirmSensorConfiguration response;
 	response.getBody()->getConfirmSensorConfigurationSequence()->getRequestIdRec()->setRequestID(request_id);
@@ -210,31 +206,29 @@ void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVid
 
 void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorCapabilitiesAction(QueryDigitalVideoSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("DigitalVideo", "sendReportDigitalVideoSensorCapabilitiesAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("DigitalVideo", "sendReportDigitalVideoSensorCapabilitiesAction to %s", sender.str().c_str());
 	ReportDigitalVideoSensorCapabilities response;
-	ReportDigitalVideoSensorCapabilities::Body::DigitalVideoSensorList::DigitalVideoSensorCapabilitiesRec entry;
-	entry.setSensorID(sensor_id);
-	response.getBody()->getDigitalVideoSensorList()->addElement(entry);
+	std::map<int, digital_resource_endpoint::DigitalResourceEndpoint>::iterator it;
+	for (it = p_endpoints.begin(); it != p_endpoints.end(); it++) {
+		ReportDigitalVideoSensorCapabilities::Body::DigitalVideoSensorList::DigitalVideoSensorCapabilitiesRec entry;
+		entry.setSensorID(it->first);
+		response.getBody()->getDigitalVideoSensorList()->addElement(entry);
+	}
 	sendJausMessage(response, sender);
 }
 
 void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorConfigurationAction(QueryDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("DigitalVideo", "sendReportDigitalVideoSensorConfigurationAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("DigitalVideo", "sendReportDigitalVideoSensorConfigurationAction to %s", sender.str().c_str());
 	ReportDigitalVideoSensorConfiguration response;
-	ReportDigitalVideoSensorConfiguration::Body::DigitalVideoSensorConfigurationList::DigitalVideoSensorConfigurationRec entry;
-	entry.setSensorID(sensor_id);
-	response.getBody()->getDigitalVideoSensorConfigurationList()->addElement(entry);
+	std::map<int, digital_resource_endpoint::DigitalResourceEndpoint>::iterator it;
+	for (it = p_endpoints.begin(); it != p_endpoints.end(); it++) {
+		ReportDigitalVideoSensorConfiguration::Body::DigitalVideoSensorConfigurationList::DigitalVideoSensorConfigurationRec entry;
+		entry.setSensorID(it->first);
+		response.getBody()->getDigitalVideoSensorConfigurationList()->addElement(entry);
+	}
 	sendJausMessage(response, sender);
 }
 
