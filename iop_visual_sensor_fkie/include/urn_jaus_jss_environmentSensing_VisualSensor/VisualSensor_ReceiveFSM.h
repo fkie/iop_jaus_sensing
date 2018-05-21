@@ -17,6 +17,8 @@
 #include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
 
+#include <boost/thread/recursive_mutex.hpp>
+#include <iop_visual_sensor_fkie/VisualSensor.h>
 
 #include "VisualSensor_ReceiveFSM_sm.h"
 
@@ -53,8 +55,14 @@ protected:
 	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
 
-	std::map<unsigned short, std::string> p_sensor_names;
+	typedef boost::recursive_mutex mutex_type;
+	typedef boost::unique_lock<mutex_type> lock_type;
+	mutable mutex_type p_mutex;
+	ReportVisualSensorConfiguration p_configuration;
 
+	std::map<jUnsignedShortInteger, boost::shared_ptr<iop::VisualSensor> > p_sensors;
+
+	void p_state_changed(jUnsignedShortInteger id);
 };
 
 };

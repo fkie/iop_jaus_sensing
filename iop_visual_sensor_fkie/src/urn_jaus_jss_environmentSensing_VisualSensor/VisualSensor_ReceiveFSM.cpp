@@ -78,116 +78,108 @@ void VisualSensor_ReceiveFSM::setupNotifications()
 	iop::Config cfg("~VisualSensor");
 	XmlRpc::XmlRpcValue sensor_names;
 	cfg.param("sensor_names", sensor_names, sensor_names);
-	if (!sensor_names.valid()) {
-		ROS_ERROR("wrong '~sensor_names' format, expected list of: ID: NAME");
+	if (sensor_names.valid()) {
+		ROS_WARN("'~sensor_names' is depricated, use '~capabilities' instead");
+		// parse the parameter into a map
+		for(int i = 0; i < sensor_names.size(); i++) {
+			if (sensor_names[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
+				for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = sensor_names[i].begin(); iterator != sensor_names[i].end(); iterator++) {
+					int ep_id = std::atoi(iterator->first.c_str());
+					std::string vi_name = iterator->second;
+					boost::shared_ptr<iop::VisualSensor> vs(boost::make_shared<iop::VisualSensor>(ep_id, vi_name));
+					p_sensors[ep_id] = vs;
+					ROS_INFO_NAMED("VisualSensor", "  %d: %s", ep_id, vi_name.c_str());
+				}
+			} else {
+				ROS_ERROR("wrong entry of '~sensor_names' format, expected list of: ID: NAME");
+			}
+		}
+	}
+	// read sensor configuration
+	XmlRpc::XmlRpcValue caps;
+	cfg.param("capabilities", caps, caps);
+	if (!caps.valid()) {
+		ROS_ERROR("wrong '~capabilities' format, expected dict of: ID: [name, zoom_mode, position, ...]");
 		ROS_BREAK();
 	}
 	// parse the parameter into a map
-	for(int i = 0; i < sensor_names.size(); i++) {
-		if (sensor_names[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
-			for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = sensor_names[i].begin(); iterator != sensor_names[i].end(); iterator++) {
-				int ep_id = std::atoi(iterator->first.c_str());
-				std::string vi_name = iterator->second;
-				p_sensor_names[ep_id] = vi_name;
-				ROS_INFO_NAMED("VisualSensor", "  %d: %s", ep_id, vi_name.c_str());
+	for(int i = 0; i < caps.size(); i++) {
+		if (caps[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
+			for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = caps[i].begin(); iterator != caps[i].end(); iterator++) {
+				int id = std::atoi(iterator->first.c_str());
+				boost::shared_ptr<iop::VisualSensor> vs(boost::make_shared<iop::VisualSensor>(id, iterator->second));
+				vs->set_state_callback(&VisualSensor_ReceiveFSM::p_state_changed, this);
+				p_sensors[id] = vs;
 			}
 		} else {
 			ROS_ERROR("wrong entry of '~sensor_names' format, expected list of: ID: NAME");
 		}
 	}
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryVisualSensorConfiguration::ID);
 }
 
 void VisualSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetVisualSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("VisualSensor", "sendConfirmSensorConfigurationAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	lock_type lock(p_mutex);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("VisualSensor", "sendConfirmSensorConfigurationAction to %s", sender.str().c_str());
 	request_id = msg.getBody()->getVisualSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
 	ConfirmSensorConfiguration response;
 	response.getBody()->getConfirmSensorConfigurationSequence()->getRequestIdRec()->setRequestID(request_id);
-	sendJausMessage(response,sender);
+	sendJausMessage(response, sender);
 }
 
 void VisualSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySensorGeometricProperties msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("VisualSensor", "sendReportSensorGeometricPropertiesAction to %d.%d.%d (default cfg)", subsystem_id, node_id, component_id);
+	lock_type lock(p_mutex);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("VisualSensor", "sendReportSensorGeometricPropertiesAction to %s (default cfg)", sender.str().c_str());
 	ReportSensorGeometricProperties response;
-	sendJausMessage(response,sender);
+	std::map<jUnsignedShortInteger, boost::shared_ptr<iop::VisualSensor> >::iterator its;
+	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
+		response.getBody()->getGeometricPropertiesList()->addElement(its->second->get_geometric());
+	}
+	sendJausMessage(response, sender);
 }
 
 void VisualSensor_ReceiveFSM::sendReportVisualSensorCapabilitiesAction(QueryVisualSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("VisualSensor", "sendReportVisualSensorCapabilitiesAction to %d.%d.%d (default cfg)", subsystem_id, node_id, component_id);
+	lock_type lock(p_mutex);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("VisualSensor", "sendReportVisualSensorCapabilitiesAction to %s (default cfg)", sender.str().c_str());
 	ReportVisualSensorCapabilities response;
-	std::map<unsigned short, std::string>::iterator it;
-	for (it = p_sensor_names.begin(); it != p_sensor_names.end(); it++) {
-		ReportVisualSensorCapabilities::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec entry;
-		entry.setSensorID(it->first);
-		entry.setSensorName(it->second);
-		response.getBody()->getVisualSensorCapabilitiesList()->addElement(entry);
+	std::map<jUnsignedShortInteger, boost::shared_ptr<iop::VisualSensor> >::iterator its;
+	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
+		response.getBody()->getVisualSensorCapabilitiesList()->addElement(its->second->get_capability());
 	}
-	sendJausMessage(response,sender);
+	sendJausMessage(response, sender);
 }
 
 void VisualSensor_ReceiveFSM::sendReportVisualSensorConfigurationAction(QueryVisualSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	/// Insert User Code HERE
-	uint16_t subsystem_id = transportData.getSrcSubsystemID();
-	uint8_t node_id = transportData.getSrcNodeID();
-	uint8_t component_id = transportData.getSrcComponentID();
-	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("VisualSensor", "sendReportVisualSensorConfigurationAction to %d.%d.%d (default cfg)", subsystem_id, node_id, component_id);
+	lock_type lock(p_mutex);
+	JausAddress sender = transportData.getAddress();
+	ROS_DEBUG_NAMED("VisualSensor", "sendReportVisualSensorConfigurationAction to %s (default cfg)", sender.str().c_str());
 	ReportVisualSensorConfiguration response;
-	std::map<unsigned short, std::string>::iterator it;
-	for (it = p_sensor_names.begin(); it != p_sensor_names.end(); it++) {
-		ReportVisualSensorConfiguration::Body::VisualSensorConfigurationList::VisualSensorConfigurationRec entry;
-		entry.setSensorID(it->first);
-		response.getBody()->getVisualSensorConfigurationList()->addElement(entry);
+	std::map<jUnsignedShortInteger, boost::shared_ptr<iop::VisualSensor> >::iterator its;
+	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
+		response.getBody()->getVisualSensorConfigurationList()->addElement(its->second->get_configuration());
 	}
-	sendJausMessage(response,sender);
+	sendJausMessage(response, sender);
 }
 
 void VisualSensor_ReceiveFSM::updateVisualSensorConfigurationAction(SetVisualSensorConfiguration msg)
 {
-	/// Insert User Code HERE
+	lock_type lock(p_mutex);
 	ROS_DEBUG_NAMED("VisualSensor", "updateVisualSensorConfigurationAction");
 	request_id = msg.getBody()->getVisualSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
-
 	for(size_t i=0; i< msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getNumberOfElements(); i++) {
 		jUnsignedByte sensorid = msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getElement(i)->getSensorID();
-		printf("[VisualSensor]   Sensor ID: %d\n", sensorid);
-		//    std::vector<camera>::iterator it;
-		//    bool found = false;
-		//    for(it = this->cameraV.begin(); it != this->cameraV.end(); it++)
-		//    {
-		//      if(it->id == sensorid)
-		//      {
-		//        it->state = msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getElement(i)->getSensorState();
-		//        found = true;
-		//        std::cout << "found sensor id: " << msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getElement(i)->getSensorID() << "\n";
-		//      }
-		//    }
-		//    if(!found)
-		//    {
-		//      ConfirmSensorConfiguration::Body::ConfirmSensorConfigurationSequence::ConfirmSensorList::ConfirmSensorConfigurationVariant data;
-		//      data.getSensorIdRec()->setSensorID(sensorid);
-		//      data.getStillImageSensorErrorRec()->setErrorMessage("Unknown SensorID");
-		//      data.getStillImageSensorErrorRec()->setStillImageErrorCode(0);
-		//      this->errorList.addElement(data);
-		//    }
+		std::map<jUnsignedShortInteger, boost::shared_ptr<iop::VisualSensor> >::iterator its = p_sensors.find(sensorid);
+		if (its != p_sensors.end()) {
+			ROS_DEBUG_NAMED("VisualSensor", "  apply config to sensor ID: %d", sensorid);
+			its->second->apply_cfg(msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getElement(i));
+		}
 	}
 }
 
@@ -200,5 +192,16 @@ bool VisualSensor_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec tran
 	return pAccessControl_ReceiveFSM->isControllingClient(transportData );
 }
 
+void VisualSensor_ReceiveFSM::p_state_changed(jUnsignedShortInteger id)
+{
+	lock_type lock(p_mutex);
+	ReportVisualSensorConfiguration cfg;
+	std::map<jUnsignedShortInteger, boost::shared_ptr<iop::VisualSensor> >::iterator its;
+	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
+		cfg.getBody()->getVisualSensorConfigurationList()->addElement(its->second->get_configuration());
+	}
+	p_configuration = cfg;
+	pEvents_ReceiveFSM->get_event_handler().set_report(QueryVisualSensorConfiguration::ID, &p_configuration);
+}
 
 };

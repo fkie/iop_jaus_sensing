@@ -18,6 +18,7 @@ iop_export_service(urn_jaus_jss_environmentSensing_VisualSensor)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
+    INCLUDE_DIRS include/public
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         iop_accesscontrol_fkie
@@ -50,8 +51,10 @@ iop_code_generator(
 
 include_directories(
     ${catkin_INCLUDE_DIRS}
+    include/public
 )
 add_library(${PROJECT_NAME}
+            src/VisualSensor.cpp
             src/VisualSensorPlugin.cpp
             ${cppfiles}
 )
@@ -70,6 +73,12 @@ target_link_libraries(${PROJECT_NAME}
 
 install(
   DIRECTORY ${IOP_INSTALL_INCLUDE_DIRS} DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+  PATTERN "*.old" EXCLUDE
+  PATTERN "*.gen" EXCLUDE
+)
+
+install(
+  DIRECTORY include/public/${PROJECT_NAME} DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
   PATTERN "*.old" EXCLUDE
   PATTERN "*.gen" EXCLUDE
 )
