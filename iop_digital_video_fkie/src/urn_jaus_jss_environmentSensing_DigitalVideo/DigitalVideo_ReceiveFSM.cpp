@@ -250,12 +250,10 @@ bool DigitalVideo_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec tran
 
 void DigitalVideo_ReceiveFSM::discovered(const std::string &service_uri, JausAddress &iop_address)
 {
-	ROS_INFO_NAMED("DigitalVideo", "discovered %s @ %d.%d.%d", service_uri.c_str(), iop_address.getSubsystemID(), iop_address.getNodeID(), iop_address.getComponentID());
-	if (p_digital_resource_discovery_addr.get() != iop_address.get()) {
-		p_digital_resource_discovery_addr = iop_address;
-		for (std::map<int, DigitalResourceEndpoint>::iterator it = p_endpoints.begin(); it != p_endpoints.end(); ++it) {
-			pRegisterVideo(it->second);
-		}
+	ROS_INFO_NAMED("DigitalVideo", "discovered %s @ %s", service_uri.c_str(), iop_address.str().c_str());
+	p_digital_resource_discovery_addr = iop_address;
+	for (std::map<int, DigitalResourceEndpoint>::iterator it = p_endpoints.begin(); it != p_endpoints.end(); ++it) {
+		pRegisterVideo(it->second);
 	}
 }
 
