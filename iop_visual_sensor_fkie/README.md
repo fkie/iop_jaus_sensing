@@ -61,30 +61,30 @@ _sensor_names (list_, (Default: []))
 
 #### Publisher:
 
-_`ID`/cmd_pwr_state (std_msgs::Bool)_
+_sensor\_`ID`/cmd_pwr_state (std_msgs::Bool)_
 
 > Sets the new power state for the sensor. Only available if switchable is `true`.
 
-_`ID`/cmd_zoom_level (std_msgs::Bool)_
+_sensor\_`ID`/cmd_zoom_level (std_msgs::Bool)_
 
 > Sets the new zoom level for the sensor. Only available if zoomable is `true`.
 
 
 #### Subscriber:
 
-_`ID`/pwr_state (std_msgs::Bool)_
+_sensor\_`ID`/pwr_state (std_msgs::Bool)_
 
 > Reads the current power state of the sensor. Only available if switchable is `true`.
 
-_`ID`/zoom_level (std_msgs::Bool)_
+_sensor\_`ID`/zoom_level (std_msgs::Bool)_
 
 > Reads the current zoom level for the sensor. Only available if zoomable is `true`.
 
-_`ID`/fov_horizontal (std_msgs::Float32)_
+_sensor\_`ID`/fov_horizontal (std_msgs::Float32)_
 
 > Reads the current horizontal field of view for the sensor. Only available if fov_horizontal is set.
 
-_`ID`/fov_vertical (std_msgs::Float32)_
+_sensor\_`ID`/fov_vertical (std_msgs::Float32)_
 
 > Reads the current vertical field of view for the sensor. Only available if fov_vertical is set.
 
