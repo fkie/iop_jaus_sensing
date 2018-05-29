@@ -36,7 +36,7 @@ VisualSensor::VisualSensor(jUnsignedShortInteger id, std::string name)
 	p_id = id;
 	p_name = name;
 	p_switchable = false;
-	p_switch_state = true;
+	p_switch_state = false;
 	p_zoomable = false;
 	p_zoom_level = 1;
 	p_joint_nr = std::numeric_limits<uint8_t>::max();
@@ -50,7 +50,7 @@ VisualSensor::VisualSensor(jUnsignedShortInteger id, XmlRpc::XmlRpcValue cfg)
 	p_id = id;
 	p_name = "";
 	p_switchable = false;
-	p_switch_state = true;
+	p_switch_state = false;
 	p_zoomable = false;
 	p_zoom_level = 0;
 	p_joint_nr = std::numeric_limits<uint8_t>::max();
