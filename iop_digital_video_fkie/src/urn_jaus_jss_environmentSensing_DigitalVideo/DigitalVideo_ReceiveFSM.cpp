@@ -78,7 +78,7 @@ void DigitalVideo_ReceiveFSM::setupNotifications()
 	p_pub_ressource_id = cfg.advertise<std_msgs::UInt16>("dv_resource_id", 10, true);
 	p_discovery_client_service = dynamic_cast<DiscoveryClientService*>(iop::Component::get_instance().get_service("DiscoveryClient"));
 	if (p_discovery_client_service == NULL)
-		throw std::runtime_error("DiscoveryClientService not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
+		throw std::runtime_error("DiscoveryClient service not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
 	p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService*>(iop::Component::get_instance().get_service("DigitalResourceDiscoveryClient"));
 	if (p_ds_discovery_client_service == NULL)
 		throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");

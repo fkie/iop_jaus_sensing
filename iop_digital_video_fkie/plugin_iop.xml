@@ -5,7 +5,8 @@
     </description>
     <iop_service name="DigitalVideo" id="urn:jaus:jss:environmentSensing:DigitalVideo" version="1.0">
       <inherits_from id="urn:jaus:jss:environmentSensing:VisualSensor" min_version="1.0"/>
-      <depend name="urn:jaus:jss:iop:DigitalResourceDiscoveryClient"/>
+      <depend id="urn:jaus:jss:iop:DigitalResourceDiscoveryClient"/>
+      <depend id="urn:jaus:jss:core:DiscoveryClient"/>
     </iop_service>
   </class>
 
