@@ -24,7 +24,7 @@ along with this program; or you can read the full license at
 #include <iostream>
 #include <string>
 #include <libgen.h>
-#include "include/Iop_range_sensor_fkie.h"
+#include "include/Fkie_iop_range_sensor.h"
 #include "JausUtils.h"
 #include <sensor_msgs/LaserScan.h>
 
