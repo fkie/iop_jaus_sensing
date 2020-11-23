@@ -28,6 +28,7 @@ catkin_package(
         fkie_iop_digital_resource_discovery
         fkie_iop_discovery
         fkie_iop_visual_sensor
+        roscpp
         std_msgs
 )
 

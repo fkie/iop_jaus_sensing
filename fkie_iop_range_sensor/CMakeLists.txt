@@ -5,9 +5,9 @@ project(fkie_iop_range_sensor)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-                    geometry_msgs
                     fkie_iop_accesscontrol
                     fkie_iop_component
+                    geometry_msgs
                     roscpp
                     sensor_msgs
                     tf)
@@ -22,9 +22,9 @@ iop_init(COMPONENT_ID 0)
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
-        geometry_msgs
         fkie_iop_accesscontrol
         fkie_iop_component
+        geometry_msgs
         roscpp
         sensor_msgs
         tf
