@@ -24,7 +24,6 @@ along with this program; or you can read the full license at
 #ifndef RANGESENSOR_RECEIVEFSM_H
 #define RANGESENSOR_RECEIVEFSM_H
 
-#include <sensor_msgs/LaserScan.h>
 #include "JausUtils.h"
 #include <string>
 #include "InternalEvents/InternalEventHandler.h"
@@ -32,7 +31,6 @@ along with this program; or you can read the full license at
 #include "JTSStateMachine.h"
 #include "urn_jaus_jss_environmentSensing_RangeSensor/Messages/MessageSet.h"
 #include "urn_jaus_jss_environmentSensing_RangeSensor/InternalEvents/InternalEventsSet.h"
-#include <tf/transform_listener.h>
 
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
@@ -41,22 +39,27 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
 
-#include "ros/ros.h"
-#include <boost/thread/recursive_mutex.hpp>
-
 #include "RangeSensor_ReceiveFSM_sm.h"
+#include <mutex>
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
+#include <tf2_ros/transform_listener.h>
+
 
 namespace urn_jaus_jss_environmentSensing_RangeSensor
 {
 
 class DllExport RangeSensor_ReceiveFSM : public JTS::StateMachine
 {
+//friend RangeSensor;
 public:
-	RangeSensor_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM);
+	RangeSensor_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~RangeSensor_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void sendConfirmSensorConfigurationAction(SetRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData);
@@ -80,33 +83,43 @@ protected:
 
 	class RangeSensor {
 	public:
-		RangeSensor(int id, std::string topic, RangeSensor_ReceiveFSM *parent);
+		RangeSensor(std::shared_ptr<iop::Component> cmp, int id, std::string topic, std::string tf_frame_robot, RangeSensor_ReceiveFSM &parent);
 		~RangeSensor();
 		int id;
 		bool initialized;
 		std::string ros_topic;
-		ros::Subscriber ros_sub;
+		std::string tf_frame_robot;
+		rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr ros_sub;
 		ReportRangeSensorCapabilities capabilities;
 		ReportSensorGeometricProperties geometric;
 		ReportRangeSensorConfiguration configuration;
 		ReportRangeSensorData sensor_data;
-	};
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
-	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
-	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+		void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
+	private:
+		RangeSensor_ReceiveFSM *parent;
 
-	typedef boost::recursive_mutex mutex_type;
-	typedef boost::unique_lock<mutex_type> lock_type;
+	};
+	/// References to parent FSMs
+	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
+
+	typedef std::shared_ptr<sensor_msgs::msg::LaserScan const> LaserScanConstPtr;
+	typedef std::recursive_mutex mutex_type;
+	typedef std::unique_lock<mutex_type> lock_type;
 	mutable mutex_type p_mutex;
 	std::vector<RangeSensor *> p_sensors;
 	std::string p_tf_frame_robot;
-	tf::TransformListener tfListener;
+	std::unique_ptr<tf2_ros::Buffer> p_tf_buffer;
+	std::shared_ptr<tf2_ros::TransformListener> p_tf_listener;
 
 	void stop_subscriber();
-	void scan_callback(const ros::MessageEvent<sensor_msgs::LaserScan const>& event);
-};
 
 };
+
+}
 
 #endif // RANGESENSOR_RECEIVEFSM_H

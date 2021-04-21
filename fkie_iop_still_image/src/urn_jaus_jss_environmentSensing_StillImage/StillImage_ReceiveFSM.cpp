@@ -1,7 +1,8 @@
 
 
 #include "urn_jaus_jss_environmentSensing_StillImage/StillImage_ReceiveFSM.h"
-#include <fkie_iop_component/iop_config.h>
+#include <fkie_iop_component/iop_config.hpp>
+#include <fkie_iop_component/string.hpp>
 
 
 
@@ -14,7 +15,8 @@ namespace urn_jaus_jss_environmentSensing_StillImage
 
 
 
-StillImage_ReceiveFSM::StillImage_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_environmentSensing_VisualSensor::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM)
+StillImage_ReceiveFSM::StillImage_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_environmentSensing_VisualSensor::VisualSensor_ReceiveFSM* pVisualSensor_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("StillImage"))
 {
 
 	/*
@@ -24,10 +26,11 @@ StillImage_ReceiveFSM::StillImage_ReceiveFSM(urn_jaus_jss_core_Transport::Transp
 	 */
 	context = new StillImage_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
-	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
 	this->pVisualSensor_ReceiveFSM = pVisualSensor_ReceiveFSM;
+	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 }
 
 
@@ -47,93 +50,145 @@ void StillImage_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready_Controlled", "StillImage_ReceiveFSM");
 	registerNotification("Receiving_Ready", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving_Ready", "StillImage_ReceiveFSM");
 	registerNotification("Receiving", pVisualSensor_ReceiveFSM->getHandler(), "InternalStateChange_To_VisualSensor_ReceiveFSM_Receiving", "StillImage_ReceiveFSM");
+
+}
+
+
+void StillImage_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "StillImage");
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryStillImageData::ID, true);
-	iop::Config cfg("~StillImage");
-	XmlRpc::XmlRpcValue sensors;
-	cfg.param("image_sensors", sensors, sensors);
-	if (!sensors.valid()) {
-		ROS_ERROR_NAMED("StillImage", "wrong '~image_sensors' format, expected list of: ID: TOPIC.\n  ID: ressource id {0..254}");
-		ROS_BREAK();
-	}
-	// parse the parameter into a map
-	for(int i = 0; i < sensors.size(); i++) {
-		if (sensors[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
-			for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = sensors[i].begin(); iterator != sensors[i].end(); iterator++) {
-				std::string vi_type = iterator->first;
-				int ep_id = std::atoi(vi_type.c_str());
-				if (ep_id == 0) {
-					ROS_WARN_NAMED("StillImage", "sensor id 0 is reserved, please fix configuration!");
-				}
-				std::string vi_uri = iterator->second;
-				p_sensors[ep_id] = vi_uri;
-				p_subscriber[ep_id] = cfg.subscribe(vi_uri, 1, &StillImage_ReceiveFSM::ros_compressed_image_handler, this);;
-				p_sensor_ids[p_subscriber.at(ep_id).getTopic()] = ep_id;
-				ReportStillImageSensorCapabilities::Body::StillImageSensorList::StillImageSensorCapabilitiesRec scap_rec;
-				scap_rec.setSensorID(ep_id);
-				p_report_capabilities.getBody()->getStillImageSensorList()->addElement(scap_rec);
-				ReportStillImageSensorConfiguration::Body::StillImageSensorConfigurationList::StillImageSensorConfigurationRec sconf_rec;
-				sconf_rec.setSensorID(ep_id);
-				p_report_configuration.getBody()->getStillImageSensorConfigurationList()->addElement(sconf_rec);
+	std::vector<std::string> sensors;
+	cfg.declare_param<std::vector<std::string> >("image_topics", sensors, false,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
+		"List of pairs of type {ID.ROS_TOPIC_NAME}. Example: - 4.map_image/compressed. The topics must have a type of sensor_msgs::CompressedImage.",
+		"Default: []");
+	cfg.param_vector<std::vector<std::string> >("image_topics", sensors, sensors);
+	for (unsigned int i = 0; i < sensors.size(); i++) {
+		auto entry = iop::split(iop::trim(sensors[i]), '.', 2);
+		if (entry.size() == 2) {
+			int ep_id = std::atoi(entry[0].c_str());
+			std::string ep_topic = entry[1];
+			if (ep_id == 0) {
+				RCLCPP_WARN(logger, "StillImage", "sensor id 0 is reserved, please fix configuration!");
+			} else {
+				RCLCPP_INFO(logger, "Found image_topic <id: %d, topic: %s>", ep_id, ep_topic);
 			}
+
+			p_sensors[ep_id] = std::make_shared<StillImage_ReceiveFSM::ImageEndpoint>(cmp, ep_id, ep_topic, *this);
+			ReportStillImageSensorCapabilities::Body::StillImageSensorList::StillImageSensorCapabilitiesRec scap_rec;
+			scap_rec.setSensorID(ep_id);
+			p_report_capabilities.getBody()->getStillImageSensorList()->addElement(scap_rec);
+			ReportStillImageSensorConfiguration::Body::StillImageSensorConfigurationList::StillImageSensorConfigurationRec sconf_rec;
+			sconf_rec.setSensorID(ep_id);
+			p_report_configuration.getBody()->getStillImageSensorConfigurationList()->addElement(sconf_rec);
+
 		} else {
-			ROS_ERROR_NAMED("StillImage", "wrong entry of '~sensors', expected: 'ID: ROS_TOPIC'.\n  ID: int value 0-254\n  ROS_TOPIC: string");
+			RCLCPP_WARN(logger, "skipped image_topic entry '%s' because of invalid format, expected list of: ID.ROS_TOPIC_NAME", sensors[i]);
 		}
 	}
+}
 
+StillImage_ReceiveFSM::ImageEndpoint::ImageEndpoint(std::shared_ptr<iop::Component> cmp, int id, std::string topic, StillImage_ReceiveFSM& parent)
+{
+	this->id = id;
+	this->topic = topic;
+	this->cmp = cmp;
+	this->parent = &parent;
+	is_report_valid = false;
+	iop::Config cfg(cmp, "ImageEndpoint");
+	subscriber = cfg.create_subscription<sensor_msgs::msg::CompressedImage>(topic, 1, std::bind(&StillImage_ReceiveFSM::ImageEndpoint::ros_compressed_image_handler, this, std::placeholders::_1));
+}
+
+StillImage_ReceiveFSM::ImageEndpoint::~ImageEndpoint()
+{
+
+}
+
+void StillImage_ReceiveFSM::ImageEndpoint::ros_compressed_image_handler(const sensor_msgs::msg::CompressedImage::SharedPtr msg)
+{
+	/*
+	*
+	*/
+	lock_type lock(parent->p_mutex);
+	report = ReportStillImageData();
+	ReportStillImageData::Body::StillImageDataList::StillImageDataRec rep_rec;
+	rep_rec.setSensorID(id);
+	ReportStillImageData::Body::StillImageDataList::StillImageDataRec::ImageFrame img_frame;
+	unsigned short format_id = parent->get_image_format(msg->format);
+	// TODO update format in capabilities and configuration reports
+	img_frame.set(format_id, msg->data.size(), (unsigned char *)&msg->data[0]);
+	rep_rec.setImageFrame(img_frame);
+	report.getBody()->getStillImageDataList()->addElement(rep_rec);
+	// apply query filter
+	std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage> queries;
+	parent->pEvents_ReceiveFSM->get_event_handler().get_queries(QueryStillImageData::ID, queries);
+	std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage>::iterator it;
+	for (it = queries.begin(); it != queries.end(); ++it) {
+		QueryStillImageData qr;
+		qr.decode(it->second.getData());
+		unsigned int qr_len = qr.getBody()->getQueryStillImageDataList()->getNumberOfElements();
+		for (unsigned int q = 0; q < qr_len; q++) {
+			QueryStillImageData::Body::QueryStillImageDataList::QueryStillImageDataRec *qr_rec;
+			qr_rec = qr.getBody()->getQueryStillImageDataList()->getElement(q);
+			if (qr_rec->getSensorID() == id || qr_rec->getSensorID() == 0 || qr_rec->getSensorID() == 65535) {
+				parent->pEvents_ReceiveFSM->get_event_handler().send_report(it->first, report, id);
+			}
+		}
+	}
+	is_report_valid = true;
 }
 
 void StillImage_ReceiveFSM::sendConfirmSensorConfigurationAction(SetStillImageSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
-	ROS_WARN_NAMED("StillImage", "sendConfirmSensorConfigurationAction not implemented!");
+	RCLCPP_WARN(logger, "StillImage", "sendConfirmSensorConfigurationAction not implemented!");
 }
 
 void StillImage_ReceiveFSM::sendReportStillImageDataAction(QueryStillImageData msg, Receive::Body::ReceiveRec transportData)
 {
-	mutex.lock();
+	lock_type lock(p_mutex);
 	JausAddress sender(transportData.getSrcSubsystemID(), transportData.getSrcNodeID(), transportData.getSrcComponentID());
-	std::map<int, ReportStillImageData>::iterator it;
-	for (it = p_report_image_data_map.begin(); it != p_report_image_data_map.end(); ++it) {
-		if (is_requested(it->first, msg)) {
-			ROS_DEBUG_NAMED("StillImage", "sendReportStillImageData for sensor %d to %s", it->first, sender.str().c_str());
-			sendJausMessage(it->second, sender);
+	std::map<int, std::shared_ptr<ImageEndpoint> >::iterator it;
+	for (it = p_sensors.begin(); it != p_sensors.end(); ++it) {
+		if (is_requested(it->first, msg) && it->second->is_report_valid) {
+			RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageData for sensor %d to %s", it->first, sender.str().c_str());
+			sendJausMessage(it->second->report, sender);
 		}
 	}
-	mutex.unlock();
 }
 
 void StillImage_ReceiveFSM::sendReportStillImageDataInNativeSystemAction(QueryStillImageData msg, Receive::Body::ReceiveRec transportData)
 {
-	mutex.lock();
+	lock_type lock(p_mutex);
 	JausAddress sender(transportData.getSrcSubsystemID(), transportData.getSrcNodeID(), transportData.getSrcComponentID());
-	std::map<int, ReportStillImageData>::iterator it;
-	for (it = p_report_image_data_map.begin(); it != p_report_image_data_map.end(); ++it) {
-		if (is_requested(it->first, msg)) {
-			ROS_DEBUG_NAMED("StillImage", "sendReportStillImageDataInNative for sensor %d to %s", it->first, sender.str().c_str());
-			sendJausMessage(it->second, sender);
+	std::map<int, std::shared_ptr<ImageEndpoint> >::iterator it;
+	for (it = p_sensors.begin(); it != p_sensors.end(); ++it) {
+		if (is_requested(it->first, msg) && it->second->is_report_valid) {
+			RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageDataInNative for sensor %d to %s", it->first, sender.str().c_str());
+			sendJausMessage(it->second->report, sender);
 		}
 	}
-	mutex.unlock();
 }
 
 void StillImage_ReceiveFSM::sendReportStillImageSensorCapabilitiesAction(QueryStillImageSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender(transportData.getSrcSubsystemID(), transportData.getSrcNodeID(), transportData.getSrcComponentID());
-	ROS_DEBUG_NAMED("StillImage", "sendReportStillImageSensorCapabilitiesAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageSensorCapabilitiesAction to %s", sender.str().c_str());
 	sendJausMessage(p_report_capabilities, sender);
 }
 
 void StillImage_ReceiveFSM::sendReportStillImageSensorConfigurationAction(QueryStillImageSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender(transportData.getSrcSubsystemID(), transportData.getSrcNodeID(), transportData.getSrcComponentID());
-	ROS_DEBUG_NAMED("StillImage", "sendReportStillImageSensorConfigurationAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageSensorConfigurationAction to %s", sender.str().c_str());
 	sendJausMessage(p_report_configuration, sender);
 }
 
 void StillImage_ReceiveFSM::updateStillImageSensorConfigurationAction(SetStillImageSensorConfiguration msg)
 {
 	/// Insert User Code HERE
-	ROS_WARN_NAMED("StillImage", "updateStillImageSensorConfigurationAction not implemented!");
+	RCLCPP_WARN(logger, "StillImage", "updateStillImageSensorConfigurationAction not implemented!");
 }
 
 
@@ -149,48 +204,6 @@ bool StillImage_ReceiveFSM::isCoordinateTransformSupported(QueryStillImageData m
 {
 	/// Insert User Code HERE
 	return false;
-}
-
-void StillImage_ReceiveFSM::ros_compressed_image_handler(const ros::MessageEvent<const sensor_msgs::CompressedImage >& event)
-{
-	/*
-	*
-	*/
-	const sensor_msgs::CompressedImage& msg = *event.getMessage();
-	std::string topic_name = event.getConnectionHeader()["topic"];
-	std::map<std::string, int>::iterator it = p_sensor_ids.find(topic_name);
-	if (it != p_sensor_ids.end()) {
-		int id = p_sensor_ids[topic_name];
-		ROS_INFO_ONCE_NAMED("StillImage", "received CompressedImage from: %s", topic_name.c_str());
-		mutex.lock();
-		p_report_image_data_map[id] = ReportStillImageData();
-		ReportStillImageData &report = p_report_image_data_map[id];
-		ReportStillImageData::Body::StillImageDataList::StillImageDataRec rep_rec;
-		rep_rec.setSensorID(id);
-		ReportStillImageData::Body::StillImageDataList::StillImageDataRec::ImageFrame img_frame;
-		unsigned short format_id = get_image_format(msg.format);
-		// TODO update format in capabilities and configuration reports
-		img_frame.set(format_id, msg.data.size(), (unsigned char *)&msg.data[0]);
-		rep_rec.setImageFrame(img_frame);
-		report.getBody()->getStillImageDataList()->addElement(rep_rec);
-		// apply query filter
-		std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage> queries;
-		pEvents_ReceiveFSM->get_event_handler().get_queries(QueryStillImageData::ID, queries);
-		std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage>::iterator it;
-		for (it = queries.begin(); it != queries.end(); ++it) {
-			QueryStillImageData qr;
-			qr.decode(it->second.getData());
-			unsigned int qr_len = qr.getBody()->getQueryStillImageDataList()->getNumberOfElements();
-			for (unsigned int q = 0; q < qr_len; q++) {
-				QueryStillImageData::Body::QueryStillImageDataList::QueryStillImageDataRec *qr_rec;
-				qr_rec = qr.getBody()->getQueryStillImageDataList()->getElement(q);
-				if (qr_rec->getSensorID() == id || qr_rec->getSensorID() == 0 || qr_rec->getSensorID() == 65535) {
-					pEvents_ReceiveFSM->get_event_handler().send_report(it->first, report, id);
-				}
-			}
-		}
-		mutex.unlock();
-	}
 }
 
 bool StillImage_ReceiveFSM::is_requested(unsigned short sensor_id, QueryStillImageData &msg)
@@ -249,9 +262,9 @@ unsigned short StillImage_ReceiveFSM::get_image_format(std::string format)
 	if (format.find("pnm") != std::string::npos or format.find("PNM") != std::string::npos) {
 		return 7;
 	}
-	ROS_WARN_NAMED("StillImage", "can't determine JAUS image format from: %s", format.c_str());
+	RCLCPP_WARN(logger, "StillImage", "can't determine JAUS image format from: %s", format.c_str());
 	return 2;
 }
 
 
-};
+}

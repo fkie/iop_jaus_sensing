@@ -21,18 +21,15 @@ along with this program; or you can read the full license at
 /** \author Alexander Tiderko */
 
 #include "urn_jaus_jss_environmentSensing_RangeSensor/RangeSensor_ReceiveFSM.h"
+#include <fkie_iop_component/iop_config.hpp>
+#include <fkie_iop_component/timestamp.hpp>
+
 #include <iostream>
 #include <string>
 #include <libgen.h>
-#include "include/Fkie_iop_range_sensor.h"
 #include "JausUtils.h"
-#include <sensor_msgs/LaserScan.h>
 
-#include <ros/ros.h>
-#include <tf/transform_listener.h>
-#include <geometry_msgs/Twist.h>
-#include <fkie_iop_builder/timestamp.h>
-#include <fkie_iop_component/iop_config.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
 
 using namespace JTS;
@@ -50,7 +47,8 @@ namespace urn_jaus_jss_environmentSensing_RangeSensor
 
 
 
-RangeSensor_ReceiveFSM::RangeSensor_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
+RangeSensor_ReceiveFSM::RangeSensor_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("RangeSensor"))
 {
 
 	/*
@@ -60,9 +58,10 @@ RangeSensor_ReceiveFSM::RangeSensor_ReceiveFSM(urn_jaus_jss_core_Transport::Tran
 	 */
 	context = new RangeSensor_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 	p_tf_frame_robot = "base_link";
 }
 
@@ -84,39 +83,55 @@ void RangeSensor_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "RangeSensor_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "RangeSensor_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "RangeSensor_ReceiveFSM");
-	pEvents_ReceiveFSM->get_event_handler().register_query(QueryRangeSensorData::ID);
-	stop_subscriber();
-	iop::Config cfg("~RangeSensor");
-	cfg.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
-
-	XmlRpc::XmlRpcValue v;
-	int sensor_id = 1;  // id 0 is reserved for all
-	cfg.param("range_sensors", v, v);
-	lock_type lock(p_mutex);
-	if (v.getType() == XmlRpc::XmlRpcValue::TypeArray) {
-		for(unsigned int i = 0; i < v.size(); i++) {
-			std::string ros_topic = v[i];
-			// resolve to node namespace
-			std::string ros_topic_resolved = ros::names::resolve(ros_topic);
-			RangeSensor *sensor = new RangeSensor(sensor_id, ros_topic_resolved, this);
-			sensor_id++;
-			p_sensors.push_back(sensor);
-		}
-	} else {
-		ROS_WARN("wrong ~sensors parameter type! It should be an array with format [ros_topic, ...]");
-	}
 }
 
-RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(int id, std::string topic, RangeSensor_ReceiveFSM *parent)
+
+void RangeSensor_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "RangeSensor");
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryRangeSensorData::ID);
+	stop_subscriber();
+	cfg.declare_param<std::string>("tf_frame_robot", p_tf_frame_robot, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"TF frame used in ROS for local coordinates. This value is set in each command message.",
+		"Default: 'base_link'");
+	std::vector<std::string> sensors;
+	cfg.declare_param<std::vector<std::string> >("range_sensors", sensors, false,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
+		"A list with laser scan topics.",
+		"Default: []");
+
+	cfg.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
+	int sensor_id = 1;  // id 0 is reserved for all
+	lock_type lock(p_mutex);
+	p_tf_buffer = std::make_unique<tf2_ros::Buffer>(cmp->get_clock());
+	p_tf_listener = std::make_shared<tf2_ros::TransformListener>(*p_tf_buffer);
+	cfg.param_vector<std::vector<std::string> >("range_sensors", sensors, sensors);
+	for(unsigned int i = 0; i < sensors.size(); i++) {
+		std::string ros_topic = sensors[i];
+		// resolve to node namespace
+		RangeSensor *sensor = new RangeSensor(cmp, sensor_id, ros_topic, p_tf_frame_robot, *this);
+		sensor_id++;
+		p_sensors.push_back(sensor);
+	}
+
+	// } else {
+	// 	RCLCPP_WARN(logger, "wrong ~sensors parameter type! It should be an array with format [ros_topic, ...]");
+	// }
+}
+
+RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(std::shared_ptr<iop::Component> cmp, int id, std::string topic, std::string tf_frame_robot, RangeSensor_ReceiveFSM &parent)
 {
 	this->id = id;
 	this->initialized = false;
+	this->tf_frame_robot = tf_frame_robot;
+	this->parent = &parent;
 	this->ros_topic = topic;
-	iop::Config cfg("~RangeSensor");
-	this->ros_sub = cfg.subscribe(topic, 1, &RangeSensor_ReceiveFSM::scan_callback, parent);
+	iop::Config cfg(cmp, "RangeSensor_" + topic);
+	this->ros_sub = cfg.create_subscription<sensor_msgs::msg::LaserScan>(topic, 1, std::bind(&RangeSensor_ReceiveFSM::RangeSensor::scan_callback, this, std::placeholders::_1));
 	ReportRangeSensorCapabilities::Body::RangeSensorCapabilitiesList::RangeSensorCapabilitiesRec caprec;
 	caprec.setSensorID(id);
-	caprec.setSensorName(std::string(basename((char *)topic.c_str())));
+	caprec.setSensorName(std::string(basename((char *)topic.c_str()))); // or this->ros_sub->get_topic_name() ?
 	caprec.getSupportedCompression()->setNoCompression(1);
 	this->capabilities.getBody()->getRangeSensorCapabilitiesList()->addElement(caprec);
 	ReportRangeSensorConfiguration::Body::RangeSensorConfigurationList::RangeSensorConfigurationRec cfgrec;
@@ -141,7 +156,103 @@ RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(int id, std::string topic, Rang
 
 RangeSensor_ReceiveFSM::RangeSensor::~RangeSensor()
 {
-	ros_sub.shutdown();
+	//ros_sub.shutdown();
+}
+
+void RangeSensor_ReceiveFSM::RangeSensor::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
+{
+	lock_type lock(this->parent->p_mutex);
+	if (!this->initialized) {
+		// try to get the robot coordinate system
+		bool geo_init = false;
+		if (!tf_frame_robot.empty()) {
+			try {
+  				auto ts = parent->p_tf_buffer->lookupTransform(tf_frame_robot, scan->header.frame_id, scan->header.stamp, rclcpp::Duration(0.3));
+				ReportSensorGeometricProperties::Body::GeometricPropertiesList::GeometricPropertiesSequence::GeometricPropertiesVariant::StaticGeometricPropertiesRec staticgeo;
+				staticgeo.getSensorPosition()->setPositionVectorElement(0, ts.transform.translation.x);
+				staticgeo.getSensorPosition()->setPositionVectorElement(1, ts.transform.translation.y);
+				staticgeo.getSensorPosition()->setPositionVectorElement(2, ts.transform.translation.z);
+				staticgeo.getUnitQuaternion()->setUnitQuaternionElement(0, ts.transform.rotation.x);
+				staticgeo.getUnitQuaternion()->setUnitQuaternionElement(1, ts.transform.rotation.y);
+				staticgeo.getUnitQuaternion()->setUnitQuaternionElement(2, ts.transform.rotation.z);
+				staticgeo.getUnitQuaternion()->setUnitQuaternionElement(3, ts.transform.rotation.w);
+				this->geometric.getBody()->getGeometricPropertiesList()->getElement(0)->getGeometricPropertiesVariant()->setStaticGeometricPropertiesRec(staticgeo);
+				this->geometric.getBody()->getGeometricPropertiesList()->getElement(0)->getGeometricPropertiesVariant()->setFieldValue(1);
+				geo_init = true;
+				RCLCPP_DEBUG(parent->logger, "initialized geometrics for range sensor %s", this->ros_sub->get_topic_name());
+  			} catch (tf2::TransformException &ex) {
+				rclcpp::Clock steady_clock(RCL_STEADY_TIME);
+				RCLCPP_WARN_THROTTLE(parent->logger, steady_clock, 1000, "Could not lookup transform from %s to %s: %s", tf_frame_robot, scan->header.frame_id, ex.what());
+			}
+		}
+		capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMinimumHorizontalFieldOfViewStartAngle(scan->angle_min);
+		capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMaximumHorizontalFieldOfViewStopAngle(scan->angle_max);
+		capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMinimumRange(scan->range_min);
+		capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMaximumRange(scan->range_max);
+		configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setSensorState(0);
+		configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setHorizontalFieldOfViewStartAngle(scan->angle_min);
+		configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setHorizontalFieldOfViewStopAngle(scan->angle_max);
+		configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setMinimumRange(scan->range_min);
+		configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setMaximumRange(scan->range_max);
+		if (geo_init) {
+			this->initialized = true;
+		}
+	}
+	if (sensor_data.getBody()->getRangeSensorDataList()->getNumberOfElements() > 0)
+	{
+		sensor_data.getBody()->getRangeSensorDataList()->deleteLastElement();
+	}
+	ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant sdatavar;
+	// set timestamp
+	ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant::RangeSensorDataSeq::RangeSensorDataRec::TimeStamp ts;
+	// current date/time based on current system
+	iop::Timestamp stamp(scan->header.stamp);
+	ts.setDay(stamp.days);
+	ts.setHour(stamp.hours);
+	ts.setMinutes(stamp.minutes);
+	ts.setSeconds(stamp.seconds);
+	ts.setMilliseconds(stamp.milliseconds);
+	sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setSensorID(id);
+	sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setTimeStamp(ts);
+	sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setReportCoordinateSystem(1);
+	// set points
+	ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant::RangeSensorDataSeq::RangeSensorDataPointList::RangeSensorDataPointRec point;
+	for (unsigned int i = 0; i < scan->ranges.size(); ++i) {
+		point.setBearing(scan->angle_min + (i * scan->angle_increment));
+		if (std::isnan(scan->ranges[i])) {
+			point.setRangeValidity(0);
+		} else {
+			int res = point.setRange(scan->ranges[i]);
+			if (res == 0) {
+				point.setRangeValidity(1);
+			} else {
+				point.setRangeValidity(0);
+			}
+		}
+		point.setInclination(0.0);
+		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataPointList()->addElement(point);
+	}
+	sdatavar.setFieldValue(1);
+	sensor_data.getBody()->getRangeSensorDataList()->addElement(sdatavar);
+	// apply query filter
+	std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage> queries;
+	parent->pEvents_ReceiveFSM->get_event_handler().get_queries(QueryRangeSensorData::ID, queries);
+	std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage>::iterator it;
+	for (it = queries.begin(); it != queries.end(); ++it) {
+		QueryRangeSensorData qr;
+		qr.decode(it->second.getData());
+		unsigned int qr_len = qr.getBody()->getQueryRangeSensorDataList()->getNumberOfElements();
+		for (unsigned int q = 0; q < qr_len; q++) {
+			QueryRangeSensorData::Body::QueryRangeSensorDataList::QueryRangeSensorDataRec *qr_rec;
+			qr_rec = qr.getBody()->getQueryRangeSensorDataList()->getElement(q);
+			if (qr_rec->getSensorID() == id || qr_rec->getSensorID() == 0 || qr_rec->getSensorID() == 65535) {
+				ReportRangeSensorData sensor_data_report;
+				sensor_data_report.getBody()->getRangeSensorDataList()->addElement(sdatavar);
+				parent->pEvents_ReceiveFSM->get_event_handler().send_report(it->first, sensor_data_report, id);
+			}
+		}
+	}
+//		pEvents_ReceiveFSM->get_event_handler().set_report(QueryRangeSensorData::ID, &sensor->sensor_data);
 }
 
 
@@ -152,115 +263,6 @@ void RangeSensor_ReceiveFSM::stop_subscriber()
 		delete p_sensors[i];
 	}
 	p_sensors.clear();
-}
-
-void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::LaserScan const>& event)
-{
-	lock_type lock(p_mutex);
-	ros::M_string& header = event.getConnectionHeader();
-	ros::Time receipt_time = event.getReceiptTime();
-	const sensor_msgs::LaserScan::ConstPtr &msg = event.getMessage();
-	RangeSensor *sensor = NULL;
-	for (unsigned int i = 0; i < p_sensors.size(); i++) {
-		if (p_sensors[i]->ros_topic.compare(header["topic"]) == 0) {
-			sensor = p_sensors[i];
-			break;
-		}
-	}
-	if (sensor != NULL) {
-		if (!sensor->initialized) {
-			// try to get the robot coordinate system
-			bool geo_init = false;
-			try {
-				if (!p_tf_frame_robot.empty()) {
-					tfListener.waitForTransform(p_tf_frame_robot, msg->header.frame_id, ros::Time(0), ros::Duration(0.3));
-					tf::StampedTransform transform;
-					tfListener.lookupTransform(p_tf_frame_robot, msg->header.frame_id, ros::Time(0), transform);
-					ReportSensorGeometricProperties::Body::GeometricPropertiesList::GeometricPropertiesSequence::GeometricPropertiesVariant::StaticGeometricPropertiesRec staticgeo;
-					staticgeo.getSensorPosition()->setPositionVectorElement(0, transform.getOrigin().x());
-					staticgeo.getSensorPosition()->setPositionVectorElement(1, transform.getOrigin().y());
-					staticgeo.getSensorPosition()->setPositionVectorElement(2, transform.getOrigin().z());
-					staticgeo.getUnitQuaternion()->setUnitQuaternionElement(0, transform.getRotation().getX());
-					staticgeo.getUnitQuaternion()->setUnitQuaternionElement(1, transform.getRotation().getY());
-					staticgeo.getUnitQuaternion()->setUnitQuaternionElement(2, transform.getRotation().getZ());
-					staticgeo.getUnitQuaternion()->setUnitQuaternionElement(3, transform.getRotation().getW());
-					sensor->geometric.getBody()->getGeometricPropertiesList()->getElement(0)->getGeometricPropertiesVariant()->setStaticGeometricPropertiesRec(staticgeo);
-					sensor->geometric.getBody()->getGeometricPropertiesList()->getElement(0)->getGeometricPropertiesVariant()->setFieldValue(1);
-					geo_init = true;
-					ROS_DEBUG_NAMED("RangeSensor", "initialized geometrics for range sensor %s", sensor->ros_topic.c_str());
-				}
-			} catch (tf::TransformException &ex){
-				ROS_WARN_STREAM_THROTTLE(1.0, "Could not lookup transform from " << p_tf_frame_robot << " to " << msg->header.frame_id << ": " << ex.what());
-			}
-			sensor->capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMinimumHorizontalFieldOfViewStartAngle(msg->angle_min);
-			sensor->capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMaximumHorizontalFieldOfViewStopAngle(msg->angle_max);
-			sensor->capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMinimumRange(msg->range_min);
-			sensor->capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMaximumRange(msg->range_max);
-			sensor->configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setSensorState(0);
-			sensor->configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setHorizontalFieldOfViewStartAngle(msg->angle_min);
-			sensor->configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setHorizontalFieldOfViewStopAngle(msg->angle_max);
-			sensor->configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setMinimumRange(msg->range_min);
-			sensor->configuration.getBody()->getRangeSensorConfigurationList()->getElement(0)->setMaximumRange(msg->range_max);
-			if (geo_init) {
-				sensor->initialized = true;
-			}
-		}
-		if (sensor->sensor_data.getBody()->getRangeSensorDataList()->getNumberOfElements() > 0)
-		{
-			sensor->sensor_data.getBody()->getRangeSensorDataList()->deleteLastElement();
-		}
-		ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant sdatavar;
-		// set timestamp
-		ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant::RangeSensorDataSeq::RangeSensorDataRec::TimeStamp ts;
-		// current date/time based on current system
-		iop::Timestamp stamp(msg->header.stamp);
-		ts.setDay(stamp.days);
-		ts.setHour(stamp.hours);
-		ts.setMinutes(stamp.minutes);
-		ts.setSeconds(stamp.seconds);
-		ts.setMilliseconds(stamp.milliseconds);
-		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setSensorID(sensor->id);
-		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setTimeStamp(ts);
-		sdatavar.getRangeSensorDataSeq()->getRangeSensorDataRec()->setReportCoordinateSystem(1);
-		// set points
-		ReportRangeSensorData::Body::RangeSensorDataList::RangeSensorDataVariant::RangeSensorDataSeq::RangeSensorDataPointList::RangeSensorDataPointRec point;
-		for (unsigned int i = 0; i < msg->ranges.size(); ++i) {
-			point.setBearing(msg->angle_min + (i * msg->angle_increment));
-			if (std::isnan(msg->ranges[i])) {
-				point.setRangeValidity(0);
-			} else {
-				int res = point.setRange(msg->ranges[i]);
-				if (res == 0) {
-					point.setRangeValidity(1);
-				} else {
-					point.setRangeValidity(0);
-				}
-			}
-			point.setInclination(0.0);
-			sdatavar.getRangeSensorDataSeq()->getRangeSensorDataPointList()->addElement(point);
-		}
-		sdatavar.setFieldValue(1);
-		sensor->sensor_data.getBody()->getRangeSensorDataList()->addElement(sdatavar);
-		// apply query filter
-		std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage> queries;
-		pEvents_ReceiveFSM->get_event_handler().get_queries(QueryRangeSensorData::ID, queries);
-		std::map<jUnsignedByte, urn_jaus_jss_core_Events::CreateEvent::Body::CreateEventRec::QueryMessage>::iterator it;
-		for (it = queries.begin(); it != queries.end(); ++it) {
-			QueryRangeSensorData qr;
-			qr.decode(it->second.getData());
-			unsigned int qr_len = qr.getBody()->getQueryRangeSensorDataList()->getNumberOfElements();
-			for (unsigned int q = 0; q < qr_len; q++) {
-				QueryRangeSensorData::Body::QueryRangeSensorDataList::QueryRangeSensorDataRec *qr_rec;
-				qr_rec = qr.getBody()->getQueryRangeSensorDataList()->getElement(q);
-				if (qr_rec->getSensorID() == sensor->id || qr_rec->getSensorID() == 0 || qr_rec->getSensorID() == 65535) {
-					ReportRangeSensorData sensor_data_report;
-					sensor_data_report.getBody()->getRangeSensorDataList()->addElement(sdatavar);
-					pEvents_ReceiveFSM->get_event_handler().send_report(it->first, sensor_data_report, sensor->id);
-				}
-			}
-		}
-//		pEvents_ReceiveFSM->get_event_handler().set_report(QueryRangeSensorData::ID, &sensor->sensor_data);
-	}
 }
 
 bool p_requested_capability(QueryRangeSensorCapabilities msg, int id)
@@ -333,14 +335,14 @@ bool p_requested_geometric_properties_data(QuerySensorGeometricProperties msg, i
 
 void RangeSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	ROS_WARN_NAMED("RangeSensor", "sendConfirmSensorConfigurationAction not implemented yet");
+	RCLCPP_WARN(logger, "RangeSensor", "sendConfirmSensorConfigurationAction not implemented yet");
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorCapabilities to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportRangeSensorCapabilities to %s", sender.str().c_str());
 	ReportRangeSensorCapabilities response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_capability(msg, p_sensors[idx_sensor]->id)) {
@@ -352,14 +354,14 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeS
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCompressedDataAction(QueryRangeSensorCompressedData msg, std::string arg0, Receive::Body::ReceiveRec transportData)
 {
-	ROS_WARN_NAMED("RangeSensor", "sendReportRangeSensorCompressedDataAction not implemented yet");
+	RCLCPP_WARN(logger, "RangeSensor", "sendReportRangeSensorCompressedDataAction not implemented yet");
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorConfiguration to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportRangeSensorConfiguration to %s", sender.str().c_str());
 	ReportRangeSensorConfiguration response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_configuration(msg, p_sensors[idx_sensor]->id)) {
@@ -373,7 +375,7 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorDataAction(QueryRangeSensorDat
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportRangeSensorData to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportRangeSensorData to %s", sender.str().c_str());
 	ReportRangeSensorData response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_sensor_data(msg, p_sensors[idx_sensor]->id)) {
@@ -387,7 +389,7 @@ void RangeSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySens
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("RangeSensor", "sendReportSensorGeometricProperties to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportSensorGeometricProperties to %s", sender.str().c_str());
 	ReportSensorGeometricProperties response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_geometric_properties_data(msg, p_sensors[idx_sensor]->id)) {
@@ -399,7 +401,7 @@ void RangeSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySens
 
 void RangeSensor_ReceiveFSM::updateRangeSensorConfigurationAction()
 {
-	ROS_WARN("updateRangeSensorConfigurationAction not implemented yet");
+	RCLCPP_WARN(logger, "updateRangeSensorConfigurationAction not implemented yet");
 }
 
 bool RangeSensor_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec transportData)
@@ -414,4 +416,4 @@ bool RangeSensor_ReceiveFSM::isCoordinateTranformSupported()
 	return false;
 }
 
-};
+}

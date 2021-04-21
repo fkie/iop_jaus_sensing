@@ -28,12 +28,11 @@ along with this program; or you can read the full license at
 #include "urn_jaus_jss_environmentSensing_VisualSensor/Messages/MessageSet.h"
 #include "urn_jaus_jss_environmentSensing_VisualSensor/InternalEvents/InternalEventsSet.h"
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <ros/ros.h>
-#include <geometry_msgs/Pose.h>
-#include <std_msgs/Bool.h>
-#include <std_msgs/Float32.h>
+#include <rclcpp/rclcpp.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <map>
 #include <string>
 
 typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportVisualSensorCapabilities::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec CapabilityRec;
@@ -48,11 +47,11 @@ class VisualSensor {
 
 public:
 	VisualSensor(jUnsignedShortInteger id=0, std::string name="");
-	VisualSensor(jUnsignedShortInteger id, XmlRpc::XmlRpcValue cfg);
+	VisualSensor(std::shared_ptr<iop::Component> cmp, jUnsignedShortInteger id, std::map<std::string, std::string>& params);
 	~VisualSensor();
 	bool operator==(VisualSensor &value);
 	bool operator!=(VisualSensor &value);
-	void init(jUnsignedShortInteger id, XmlRpc::XmlRpcValue cfg);
+	void init(std::shared_ptr<iop::Component> cmp, jUnsignedShortInteger id, std::map<std::string, std::string>& params);
 
 	jUnsignedByte get_id() { return p_id; }
 	std::string get_name() { return p_name; }
@@ -60,7 +59,7 @@ public:
 	bool get_switch_state() { return p_switch_state; } // 0: Active, 1: Standby, 2: Off
 	JausAddress get_manipulator() { return p_manipulator; }
 	jUnsignedByte get_joint_nr() { return p_joint_nr; }
-	geometry_msgs::Pose get_pose() { return p_pose; }
+	geometry_msgs::msg::Pose get_pose() { return p_pose; }
 
 	void set_zoom_level(jUnsignedShortInteger level);
 	void set_state(jUnsignedByte state);
@@ -80,11 +79,11 @@ public:
 
 	template<class T>
 	void set_state_callback(void(T::*handler)(jUnsignedShortInteger id), T*obj) {
-		p_state_callback = boost::bind(handler, obj, _1);
+		p_state_callback = std::bind(handler, obj, std::placeholders::_1);
 	}
 
 protected:
-	boost::function<void (jUnsignedShortInteger id)> p_state_callback;
+	std::function<void (jUnsignedShortInteger id)> p_state_callback;
 	jUnsignedShortInteger p_id;
 	std::string p_name;
 	bool p_switchable;  // 0: Active, 1: Standby, 2: Off
@@ -93,27 +92,27 @@ protected:
 	jUnsignedShortInteger p_zoom_level;
 	JausAddress p_manipulator;
 	jUnsignedByte p_joint_nr;
-	geometry_msgs::Pose p_pose;
+	geometry_msgs::msg::Pose p_pose;
 	bool p_pose_valid;
 	double p_fov_horizontal;
 	double p_fov_vertical;
-	ros::Publisher p_pub_state;
-	ros::Subscriber p_sub_state;
-	ros::Publisher p_pub_zoom_level;
-	ros::Subscriber p_sub_zoom_level;
-	ros::Subscriber p_sub_fov_horizontal;
-	ros::Subscriber p_sub_fov_vertical;
+	rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr p_pub_state;
+	rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr p_sub_state;
+	rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr p_pub_zoom_level;
+	rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr p_sub_zoom_level;
+	rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr p_sub_fov_horizontal;
+	rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr p_sub_fov_vertical;
 
 private:
 	VisualSensor(VisualSensor const& from);
 	const VisualSensor& operator=(const VisualSensor& from);
 
-	void p_ros_state(const std_msgs::Bool::ConstPtr& state);
-	void p_ros_zoom_level(const std_msgs::Float32::ConstPtr& state);
-	void p_ros_fov_horizontal(const std_msgs::Float32::ConstPtr& state);
-	void p_ros_fov_vertical(const std_msgs::Float32::ConstPtr& state);
+	void p_ros_state(const std_msgs::msg::Bool::SharedPtr state);
+	void p_ros_zoom_level(const std_msgs::msg::Float32::SharedPtr state);
+	void p_ros_fov_horizontal(const std_msgs::msg::Float32::SharedPtr state);
+	void p_ros_fov_vertical(const std_msgs::msg::Float32::SharedPtr state);
 };
 
-};
+}
 
 #endif

@@ -1,0 +1,33 @@
+iop_digital_video:
+  ros__parameters:
+    iop_services:
+      - fkie_iop_discovery/DiscoveryClient
+      - fkie_iop_digital_resource_discovery/DigitalResourceDiscoveryClient
+      - fkie_iop_digital_video/DigitalVideo
+      - fkie_iop_visual_sensor/VisualSensor
+      - fkie_iop_still_image/StillImage
+    Events.timeout: 5
+    VisualSensor:
+      # list with sensor configuration parameter group by ID. Format: "ID.PARAMETER_NAME.VALUE".
+      capabilities:
+        - 1.name.Front
+        - 1.switchable.false
+        - 1.zoomable.false
+        - 1.pose.1 2 3 0 0 0 1
+        - 1.manipulator.3.1.60
+        - 1.manipulator.5
+        - 1.fov_horizontal.0
+        - 1.fov_vertical.0
+        - 2.name.local
+    DigitalVideo:
+      # list with video streams. Format: "ID.Type of source.URL".
+      # Example for RTSP stream: "0.rtsp.rtsp://URL"
+      endpoints:
+        - 1.https.https://youtu.be/h4rhdZ_MXf8?t=17
+        - 2.mpeg2ts.$(find fkie_iop_cfg_sim_stage)/resources/example.mp4
+        - 3.rtsp_topic.map_image/rtsp
+    StillImage:
+      # list with image topics. Format: ID.ROS_TOPIC.
+      image_topics:
+        - 4.map_image/compressed
+

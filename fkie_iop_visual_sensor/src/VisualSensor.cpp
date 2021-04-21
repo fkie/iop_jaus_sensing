@@ -21,10 +21,10 @@ along with this program; or you can read the full license at
 /** \author Alexander Tiderko */
 
 #include <fkie_iop_builder/util.h>
-#include <fkie_iop_component/iop_config.h>
+#include <fkie_iop_component/iop_config.hpp>
+#include <fkie_iop_component/string.hpp>
 #include <fkie_iop_visual_sensor/VisualSensor.h>
 #include <limits>
-#include <ros/console.h>
 #include <string>
 
 
@@ -45,7 +45,7 @@ VisualSensor::VisualSensor(jUnsignedShortInteger id, std::string name)
 	p_fov_vertical = std::numeric_limits<float>::max();
 }
 
-VisualSensor::VisualSensor(jUnsignedShortInteger id, XmlRpc::XmlRpcValue cfg)
+VisualSensor::VisualSensor(std::shared_ptr<iop::Component> cmp, jUnsignedShortInteger id, std::map<std::string, std::string>& params)
 {
 	p_id = id;
 	p_name = "";
@@ -57,7 +57,7 @@ VisualSensor::VisualSensor(jUnsignedShortInteger id, XmlRpc::XmlRpcValue cfg)
 	p_pose_valid = false;
 	p_fov_horizontal = std::numeric_limits<float>::max();
 	p_fov_vertical = std::numeric_limits<float>::max();
-	init(id, cfg);
+	init(cmp, id, params);
 }
 
 VisualSensor::~VisualSensor()
@@ -74,91 +74,82 @@ bool VisualSensor::operator!=(VisualSensor &value)
 	return !(*this == value);
 }
 
-void VisualSensor::init(jUnsignedShortInteger id, XmlRpc::XmlRpcValue cfg)
+void VisualSensor::init(std::shared_ptr<iop::Component> cmp, jUnsignedShortInteger id, std::map<std::string, std::string>& params)
 {
 	p_id = id;
+	auto logger = cmp->get_logger().get_child("VisualSensor");
 	std::stringstream ss;
 	ss << (int)id;
 	std::string idstr("sensor_");
 	idstr += ss.str();
 	// parse the parameter
-	if (cfg.getType() == XmlRpc::XmlRpcValue::TypeArray) {
-		iop::Config cmpcfg("~VisualSensor");
-		for(int i = 0; i < cfg.size(); i++) {
-			if (cfg[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
-				for(XmlRpc::XmlRpcValue::ValueStruct::iterator it = cfg[i].begin(); it != cfg[i].end(); it++) {
-					if (it->first.compare("name") == 0) {
-						p_name = static_cast<std::string>(it->second);
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] name: %s", id, p_name.c_str());
-					} else if (it->first.compare("zoomable") == 0) {
-						p_zoomable = it->second;
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] zoomable: %d", id, p_zoomable);
-						if (p_zoomable) {
-							p_pub_zoom_level = cmpcfg.advertise<std_msgs::Float32>(idstr + "/cmd_zoom_level", 5);
-							p_sub_zoom_level = cmpcfg.subscribe<std_msgs::Float32>(idstr + "/zoom_level", 5, &VisualSensor::p_ros_zoom_level, this);
-						}
-					} else if (it->first.compare("switchable") == 0) {
-						p_switchable = it->second;
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] switchable: %d", id, p_switchable);
-						if (p_switchable) {
-							p_pub_state = cmpcfg.advertise<std_msgs::Bool>(idstr + "/cmd_pwr_state", 5);
-							p_sub_state = cmpcfg.subscribe<std_msgs::Bool>(idstr + "/pwr_state", 5, &VisualSensor::p_ros_state, this);
-						}
-					} else if (it->first.compare("fov_horizontal") == 0) {
-						p_fov_horizontal = it->second;
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] fov_horizontal: %.2f", id, p_fov_horizontal);
-						p_sub_fov_horizontal = cmpcfg.subscribe<std_msgs::Float32>(idstr + "/fov_horizontal", 5, &VisualSensor::p_ros_fov_horizontal, this);
-					} else if (it->first.compare("fov_vertical") == 0) {
-						p_fov_vertical = it->second;
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] fov_vertical: %.2f", id, p_fov_vertical);
-						p_sub_fov_vertical = cmpcfg.subscribe<std_msgs::Float32>(idstr + "/fov_vertical", 5, &VisualSensor::p_ros_fov_vertical, this);
-					} else if (it->first.compare("manipulator") == 0) {
-						std::string iop_address = static_cast<std::string>(it->second);
-						int p1, p2, p3;
-						int scan_result = std::sscanf(iop_address.c_str(), "%d.%d.%d", &p1, &p2, &p3);
-						if (scan_result == 3) {
-							p_manipulator = JausAddress(p1, p2, p3);
-						} else {
-							ROS_WARN("invalid format in manipulator[str]: %s, should be subsystem.node.component", iop_address.c_str());
-						}
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] manipulator: %s", id, p_manipulator.str().c_str());
-					} else if (it->first.compare("manipulator_joint") == 0) {
-						p_joint_nr = static_cast<int>(it->second);
-						ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] manipulator_joint: %d", id, p_joint_nr);
-					} else if (it->first.compare("pose") == 0) {
-						std::string posestr = static_cast<std::string>(it->second);
-						float p1, p2, p3, q1, q2, q3, q4;
-						int scan_result = std::sscanf(posestr.c_str(), "%f %f %f %f %f %f %f", &p1, &p2, &p3, &q1, &q2, &q3, &q4);
-						if (scan_result == 7) {
-							p_pose.position.x = p1;
-							p_pose.position.y = p2;
-							p_pose.position.z = p3;
-							p_pose.orientation.x = q1;
-							p_pose.orientation.y = q2;
-							p_pose.orientation.z = q3;
-							p_pose.orientation.w = q4;
-							p_pose_valid = true;
-							ROS_INFO_NAMED("VisualSensor", "[visual sensor %d] pose: %.2f %.2f %.2f %.2f %.2f %.2f %.2f", id, p1, p2, p3, q1, q2, q3, q4);
-						} else {
-							ROS_WARN("invalid format in pose[str]: %s, should be x y z q1 q2 q3 q4", posestr.c_str());
-						}
-					}
-				}
+	iop::Config cmpcfg(cmp, "VisualSensor");
+	std::map<std::string, std::string>::iterator pit;
+	for (pit = params.begin(); pit != params.end(); pit++) {
+		if (pit->first.compare("name") == 0) {
+			p_name = static_cast<std::string>(pit->second);
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] name: %s", id, p_name.c_str());
+		} else if (pit->first.compare("zoomable") == 0) {
+			p_zoomable = stob(pit->second);
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] zoomable: %d", id, p_zoomable);
+			if (p_zoomable) {
+				p_pub_zoom_level = cmpcfg.create_publisher<std_msgs::msg::Float32>(idstr + "/cmd_zoom_level", 5);
+				p_sub_zoom_level = cmpcfg.create_subscription<std_msgs::msg::Float32>(idstr + "/zoom_level", 5, std::bind(&VisualSensor::p_ros_zoom_level, this, std::placeholders::_1));
+			}
+		} else if (pit->first.compare("switchable") == 0) {
+			p_switchable = stob(pit->second);
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] switchable: %d", id, p_switchable);
+			if (p_switchable) {
+				p_pub_state = cmpcfg.create_publisher<std_msgs::msg::Bool>(idstr + "/cmd_pwr_state", 5);
+				p_sub_state = cmpcfg.create_subscription<std_msgs::msg::Bool>(idstr + "/pwr_state", 5, std::bind(&VisualSensor::p_ros_state, this, std::placeholders::_1));
+			}
+		} else if (pit->first.compare("fov_horizontal") == 0) {
+			p_fov_horizontal = std::stof(pit->second);
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] fov_horizontal: %.2f", id, p_fov_horizontal);
+			p_sub_fov_horizontal = cmpcfg.create_subscription<std_msgs::msg::Float32>(idstr + "/fov_horizontal", 5, std::bind(&VisualSensor::p_ros_fov_horizontal, this, std::placeholders::_1));
+		} else if (pit->first.compare("fov_vertical") == 0) {
+			p_fov_vertical = std::stof(pit->second);
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] fov_vertical: %.2f", id, p_fov_vertical);
+			p_sub_fov_vertical = cmpcfg.create_subscription<std_msgs::msg::Float32>(idstr + "/fov_vertical", 5, std::bind(&VisualSensor::p_ros_fov_vertical, this, std::placeholders::_1));
+		} else if (pit->first.compare("manipulator") == 0) {
+			int p1, p2, p3;
+			int scan_result = std::sscanf(pit->second.c_str(), "%d.%d.%d", &p1, &p2, &p3);
+			if (scan_result == 3) {
+				p_manipulator = JausAddress(p1, p2, p3);
 			} else {
-				ROS_ERROR("wrong entry for visual sensor %d, a struct in array expected", p_id);
+				RCLCPP_WARN(logger, "invalid format in manipulator[str]: %s, should be subsystem.node.component", pit->second.c_str());
+			}
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] manipulator: %s", id, p_manipulator.str().c_str());
+		} else if (pit->first.compare("manipulator_joint") == 0) {
+			p_joint_nr = std::stoi(pit->second);
+			RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] manipulator_joint: %d", id, p_joint_nr);
+		} else if (pit->first.compare("pose") == 0) {
+			std::string posestr = static_cast<std::string>(pit->second);
+			float p1, p2, p3, q1, q2, q3, q4;
+			int scan_result = std::sscanf(pit->second.c_str(), "%f %f %f %f %f %f %f", &p1, &p2, &p3, &q1, &q2, &q3, &q4);
+			if (scan_result == 7) {
+				p_pose.position.x = p1;
+				p_pose.position.y = p2;
+				p_pose.position.z = p3;
+				p_pose.orientation.x = q1;
+				p_pose.orientation.y = q2;
+				p_pose.orientation.z = q3;
+				p_pose.orientation.w = q4;
+				p_pose_valid = true;
+				RCLCPP_INFO(logger, "VisualSensor", "[visual sensor %d] pose: %.2f %.2f %.2f %.2f %.2f %.2f %.2f", id, p1, p2, p3, q1, q2, q3, q4);
+			} else {
+				RCLCPP_WARN(logger, "invalid format in pose[str]: %s, should be x y z q1 q2 q3 q4", pit->second.c_str());
 			}
 		}
-	} else {
-		ROS_ERROR("wrong entry for visual sensor %d, array expected.", p_id);
 	}
 }
 
 void VisualSensor::set_zoom_level(jUnsignedShortInteger level)
 {
 	if (is_zoomable()) {
-		std_msgs::Float32 msg;
+		auto msg = std_msgs::msg::Float32();
 		msg.data = (float)level;
-		p_pub_zoom_level.publish(msg);
+		p_pub_zoom_level->publish(msg);
 	}
 }
 
@@ -169,9 +160,9 @@ void VisualSensor::set_state(jUnsignedByte state)
 		if (state == 2) {
 			p_switch_state = false;
 		}
-		std_msgs::Bool msg;
+		auto msg = std_msgs::msg::Bool();
 		msg.data = p_switch_state;
-		p_pub_state.publish(msg);
+		p_pub_state->publish(msg);
 	}
 }
 
@@ -263,7 +254,7 @@ void VisualSensor::apply_cfg(SetConfigurationRec* cfg)
 	}
 }
 
-void VisualSensor::p_ros_state(const std_msgs::Bool::ConstPtr& state)
+void VisualSensor::p_ros_state(const std_msgs::msg::Bool::SharedPtr state)
 {
 	p_switch_state = state ->data;
 	if (p_state_callback) {
@@ -272,7 +263,7 @@ void VisualSensor::p_ros_state(const std_msgs::Bool::ConstPtr& state)
 }
 
 
-void VisualSensor::p_ros_zoom_level(const std_msgs::Float32::ConstPtr& msg)
+void VisualSensor::p_ros_zoom_level(const std_msgs::msg::Float32::SharedPtr msg)
 {
 	p_zoom_level = msg->data;
 	if (p_state_callback) {
@@ -280,7 +271,7 @@ void VisualSensor::p_ros_zoom_level(const std_msgs::Float32::ConstPtr& msg)
 	}
 }
 
-void VisualSensor::p_ros_fov_horizontal(const std_msgs::Float32::ConstPtr& msg)
+void VisualSensor::p_ros_fov_horizontal(const std_msgs::msg::Float32::SharedPtr msg)
 {
 	p_fov_horizontal = msg->data;
 	if (p_state_callback) {
@@ -288,7 +279,7 @@ void VisualSensor::p_ros_fov_horizontal(const std_msgs::Float32::ConstPtr& msg)
 	}
 }
 
-void VisualSensor::p_ros_fov_vertical(const std_msgs::Float32::ConstPtr& msg)
+void VisualSensor::p_ros_fov_vertical(const std_msgs::msg::Float32::SharedPtr msg)
 {
 	p_fov_vertical = msg->data;
 	if (p_state_callback) {
