@@ -182,7 +182,7 @@ void RangeSensor_ReceiveFSM::RangeSensor::scan_callback(const sensor_msgs::msg::
 				RCLCPP_DEBUG(parent->logger, "initialized geometrics for range sensor %s", this->ros_sub->get_topic_name());
   			} catch (tf2::TransformException &ex) {
 				rclcpp::Clock steady_clock(RCL_STEADY_TIME);
-				RCLCPP_WARN_THROTTLE(parent->logger, steady_clock, 1000, "Could not lookup transform from %s to %s: %s", tf_frame_robot, scan->header.frame_id, ex.what());
+				RCLCPP_WARN_THROTTLE(parent->logger, steady_clock, 10000, "Could not lookup transform from %s to %s: %s", tf_frame_robot.c_str(), scan->header.frame_id.c_str(), ex.what());
 			}
 		}
 		capabilities.getBody()->getRangeSensorCapabilitiesList()->getElement(0)->setMinimumHorizontalFieldOfViewStartAngle(scan->angle_min);
