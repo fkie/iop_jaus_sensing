@@ -70,7 +70,7 @@ void StillImage_ReceiveFSM::setupIopConfiguration()
 			int ep_id = std::atoi(entry[0].c_str());
 			std::string ep_topic = entry[1];
 			if (ep_id == 0) {
-				RCLCPP_WARN(logger, "StillImage", "sensor id 0 is reserved, please fix configuration!");
+				RCLCPP_WARN(logger, "sensor id 0 is reserved, please fix configuration!");
 			} else {
 				RCLCPP_INFO(logger, "Found image_topic <id: %d, topic: %s>", ep_id, ep_topic);
 			}
@@ -142,7 +142,7 @@ void StillImage_ReceiveFSM::ImageEndpoint::ros_compressed_image_handler(const se
 void StillImage_ReceiveFSM::sendConfirmSensorConfigurationAction(SetStillImageSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
-	RCLCPP_WARN(logger, "StillImage", "sendConfirmSensorConfigurationAction not implemented!");
+	RCLCPP_WARN(logger, "sendConfirmSensorConfigurationAction not implemented!");
 }
 
 void StillImage_ReceiveFSM::sendReportStillImageDataAction(QueryStillImageData msg, Receive::Body::ReceiveRec transportData)
@@ -152,7 +152,7 @@ void StillImage_ReceiveFSM::sendReportStillImageDataAction(QueryStillImageData m
 	std::map<int, std::shared_ptr<ImageEndpoint> >::iterator it;
 	for (it = p_sensors.begin(); it != p_sensors.end(); ++it) {
 		if (is_requested(it->first, msg) && it->second->is_report_valid) {
-			RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageData for sensor %d to %s", it->first, sender.str().c_str());
+			RCLCPP_DEBUG(logger, "sendReportStillImageData for sensor %d to %s", it->first, sender.str().c_str());
 			sendJausMessage(it->second->report, sender);
 		}
 	}
@@ -165,7 +165,7 @@ void StillImage_ReceiveFSM::sendReportStillImageDataInNativeSystemAction(QuerySt
 	std::map<int, std::shared_ptr<ImageEndpoint> >::iterator it;
 	for (it = p_sensors.begin(); it != p_sensors.end(); ++it) {
 		if (is_requested(it->first, msg) && it->second->is_report_valid) {
-			RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageDataInNative for sensor %d to %s", it->first, sender.str().c_str());
+			RCLCPP_DEBUG(logger, "sendReportStillImageDataInNative for sensor %d to %s", it->first, sender.str().c_str());
 			sendJausMessage(it->second->report, sender);
 		}
 	}
@@ -174,21 +174,21 @@ void StillImage_ReceiveFSM::sendReportStillImageDataInNativeSystemAction(QuerySt
 void StillImage_ReceiveFSM::sendReportStillImageSensorCapabilitiesAction(QueryStillImageSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender(transportData.getSrcSubsystemID(), transportData.getSrcNodeID(), transportData.getSrcComponentID());
-	RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageSensorCapabilitiesAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportStillImageSensorCapabilitiesAction to %s", sender.str().c_str());
 	sendJausMessage(p_report_capabilities, sender);
 }
 
 void StillImage_ReceiveFSM::sendReportStillImageSensorConfigurationAction(QueryStillImageSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender(transportData.getSrcSubsystemID(), transportData.getSrcNodeID(), transportData.getSrcComponentID());
-	RCLCPP_DEBUG(logger, "StillImage", "sendReportStillImageSensorConfigurationAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportStillImageSensorConfigurationAction to %s", sender.str().c_str());
 	sendJausMessage(p_report_configuration, sender);
 }
 
 void StillImage_ReceiveFSM::updateStillImageSensorConfigurationAction(SetStillImageSensorConfiguration msg)
 {
 	/// Insert User Code HERE
-	RCLCPP_WARN(logger, "StillImage", "updateStillImageSensorConfigurationAction not implemented!");
+	RCLCPP_WARN(logger, "updateStillImageSensorConfigurationAction not implemented!");
 }
 
 
@@ -262,7 +262,7 @@ unsigned short StillImage_ReceiveFSM::get_image_format(std::string format)
 	if (format.find("pnm") != std::string::npos or format.find("PNM") != std::string::npos) {
 		return 7;
 	}
-	RCLCPP_WARN(logger, "StillImage", "can't determine JAUS image format from: %s", format.c_str());
+	RCLCPP_WARN(logger, "can't determine JAUS image format from: %s", format.c_str());
 	return 2;
 }
 

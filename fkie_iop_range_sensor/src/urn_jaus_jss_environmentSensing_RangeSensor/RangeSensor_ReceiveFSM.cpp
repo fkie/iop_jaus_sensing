@@ -335,14 +335,14 @@ bool p_requested_geometric_properties_data(QuerySensorGeometricProperties msg, i
 
 void RangeSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
-	RCLCPP_WARN(logger, "RangeSensor", "sendConfirmSensorConfigurationAction not implemented yet");
+	RCLCPP_WARN(logger, "sendConfirmSensorConfigurationAction not implemented yet");
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportRangeSensorCapabilities to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportRangeSensorCapabilities to %s", sender.str().c_str());
 	ReportRangeSensorCapabilities response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_capability(msg, p_sensors[idx_sensor]->id)) {
@@ -354,14 +354,14 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorCapabilitiesAction(QueryRangeS
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorCompressedDataAction(QueryRangeSensorCompressedData msg, std::string arg0, Receive::Body::ReceiveRec transportData)
 {
-	RCLCPP_WARN(logger, "RangeSensor", "sendReportRangeSensorCompressedDataAction not implemented yet");
+	RCLCPP_WARN(logger, "sendReportRangeSensorCompressedDataAction not implemented yet");
 }
 
 void RangeSensor_ReceiveFSM::sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportRangeSensorConfiguration to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportRangeSensorConfiguration to %s", sender.str().c_str());
 	ReportRangeSensorConfiguration response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_configuration(msg, p_sensors[idx_sensor]->id)) {
@@ -375,7 +375,7 @@ void RangeSensor_ReceiveFSM::sendReportRangeSensorDataAction(QueryRangeSensorDat
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportRangeSensorData to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportRangeSensorData to %s", sender.str().c_str());
 	ReportRangeSensorData response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_sensor_data(msg, p_sensors[idx_sensor]->id)) {
@@ -389,7 +389,7 @@ void RangeSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySens
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "RangeSensor", "sendReportSensorGeometricProperties to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportSensorGeometricProperties to %s", sender.str().c_str());
 	ReportSensorGeometricProperties response;
 	for (unsigned int idx_sensor = 0; idx_sensor < this->p_sensors.size(); idx_sensor++) {
 		if (p_requested_geometric_properties_data(msg, p_sensors[idx_sensor]->id)) {

@@ -118,7 +118,7 @@ void VisualSensor_ReceiveFSM::sendConfirmSensorConfigurationAction(SetVisualSens
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "VisualSensor", "sendConfirmSensorConfigurationAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendConfirmSensorConfigurationAction to %s", sender.str().c_str());
 	request_id = msg.getBody()->getVisualSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
 	ConfirmSensorConfiguration response;
 	response.getBody()->getConfirmSensorConfigurationSequence()->getRequestIdRec()->setRequestID(request_id);
@@ -129,7 +129,7 @@ void VisualSensor_ReceiveFSM::sendReportSensorGeometricPropertiesAction(QuerySen
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "VisualSensor", "sendReportSensorGeometricPropertiesAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportSensorGeometricPropertiesAction to %s", sender.str().c_str());
 	ReportSensorGeometricProperties response;
 	std::map<jUnsignedShortInteger, std::shared_ptr<iop::VisualSensor> >::iterator its;
 	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
@@ -142,7 +142,7 @@ void VisualSensor_ReceiveFSM::sendReportVisualSensorCapabilitiesAction(QueryVisu
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "VisualSensor", "sendReportVisualSensorCapabilitiesAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportVisualSensorCapabilitiesAction to %s", sender.str().c_str());
 	ReportVisualSensorCapabilities response;
 	std::map<jUnsignedShortInteger, std::shared_ptr<iop::VisualSensor> >::iterator its;
 	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
@@ -155,7 +155,7 @@ void VisualSensor_ReceiveFSM::sendReportVisualSensorConfigurationAction(QueryVis
 {
 	lock_type lock(p_mutex);
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "VisualSensor", "sendReportVisualSensorConfigurationAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportVisualSensorConfigurationAction to %s", sender.str().c_str());
 	ReportVisualSensorConfiguration response;
 	std::map<jUnsignedShortInteger, std::shared_ptr<iop::VisualSensor> >::iterator its;
 	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
@@ -167,13 +167,13 @@ void VisualSensor_ReceiveFSM::sendReportVisualSensorConfigurationAction(QueryVis
 void VisualSensor_ReceiveFSM::updateVisualSensorConfigurationAction(SetVisualSensorConfiguration msg)
 {
 	lock_type lock(p_mutex);
-	RCLCPP_DEBUG(logger, "VisualSensor", "updateVisualSensorConfigurationAction");
+	RCLCPP_DEBUG(logger, "updateVisualSensorConfigurationAction");
 	request_id = msg.getBody()->getVisualSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
 	for(size_t i=0; i< msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getNumberOfElements(); i++) {
 		jUnsignedByte sensorid = msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getElement(i)->getSensorID();
 		std::map<jUnsignedShortInteger, std::shared_ptr<iop::VisualSensor> >::iterator its = p_sensors.find(sensorid);
 		if (its != p_sensors.end()) {
-			RCLCPP_DEBUG(logger, "VisualSensor", "  apply config to sensor ID: %d", sensorid);
+			RCLCPP_DEBUG(logger, "  apply config to sensor ID: %d", sensorid);
 			its->second->apply_cfg(msg.getBody()->getVisualSensorConfigurationSequence()->getVisualSensorConfigurationList()->getElement(i));
 		}
 	}
@@ -195,7 +195,7 @@ void VisualSensor_ReceiveFSM::p_state_changed(jUnsignedShortInteger id)
 	std::map<jUnsignedShortInteger, std::shared_ptr<iop::VisualSensor> >::iterator its;
 	for (its = p_sensors.begin(); its != p_sensors.end(); its++) {
 		ReportVisualSensorConfiguration::Body::VisualSensorConfigurationList::VisualSensorConfigurationRec rec = its->second->get_configuration();
-		RCLCPP_DEBUG(logger, "VisualSensor", "  apply config to sensor ID: %d, power_state: %d, set: %d", (int) its->second->get_id(), rec.getSensorState(), (int)its->second->get_switch_state());
+		RCLCPP_DEBUG(logger, "  apply config to sensor ID: %d, power_state: %d, set: %d", (int) its->second->get_id(), rec.getSensorState(), (int)its->second->get_switch_state());
 		cfg.getBody()->getVisualSensorConfigurationList()->addElement(rec);
 	}
 	p_configuration = cfg;

@@ -174,7 +174,7 @@ void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigita
 {
 	/// Insert User Code HERE
 	unsigned short id = msg.getBody()->getControlDigitalVideoSensorStreamRec()->getSensorID();
-	RCLCPP_DEBUG(logger, "DigitalVideo", "modifyDigitalVideoSensorStreamAction resource %d", id);
+	RCLCPP_DEBUG(logger, "modifyDigitalVideoSensorStreamAction resource %d", id);
 	if (msg.getBody()->getControlDigitalVideoSensorStreamRec()->getStreamState() == 2) {
 		id = 65535;
 	} else if (msg.getBody()->getControlDigitalVideoSensorStreamRec()->getStreamState() == 0) {
@@ -187,7 +187,7 @@ void DigitalVideo_ReceiveFSM::modifyDigitalVideoSensorStreamAction(ControlDigita
 void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "DigitalVideo", "sendConfirmSensorConfigurationAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendConfirmSensorConfigurationAction to %s", sender.str().c_str());
 	unsigned char request_id = msg.getBody()->getDigitalVideoSensorConfigurationSequence()->getRequestIdRec()->getRequestID();
 	ConfirmSensorConfiguration response;
 	response.getBody()->getConfirmSensorConfigurationSequence()->getRequestIdRec()->setRequestID(request_id);
@@ -197,7 +197,7 @@ void DigitalVideo_ReceiveFSM::sendConfirmSensorConfigurationAction(SetDigitalVid
 void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorCapabilitiesAction(QueryDigitalVideoSensorCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "DigitalVideo", "sendReportDigitalVideoSensorCapabilitiesAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportDigitalVideoSensorCapabilitiesAction to %s", sender.str().c_str());
 	ReportDigitalVideoSensorCapabilities response;
 	std::map<int, std::shared_ptr<VideoEndpoint> >::iterator it;
 	for (it = p_endpoints.begin(); it != p_endpoints.end(); it++) {
@@ -211,7 +211,7 @@ void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorCapabilitiesAction(Que
 void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorConfigurationAction(QueryDigitalVideoSensorConfiguration msg, Receive::Body::ReceiveRec transportData)
 {
 	JausAddress sender = transportData.getAddress();
-	RCLCPP_DEBUG(logger, "DigitalVideo", "sendReportDigitalVideoSensorConfigurationAction to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger, "sendReportDigitalVideoSensorConfigurationAction to %s", sender.str().c_str());
 	ReportDigitalVideoSensorConfiguration response;
 	std::map<int, std::shared_ptr<VideoEndpoint> >::iterator it;
 	for (it = p_endpoints.begin(); it != p_endpoints.end(); it++) {
@@ -225,7 +225,7 @@ void DigitalVideo_ReceiveFSM::sendReportDigitalVideoSensorConfigurationAction(Qu
 void DigitalVideo_ReceiveFSM::updateDigitalVideoSensorConfigurationAction(SetDigitalVideoSensorConfiguration msg)
 {
 	/// Insert User Code HERE
-	RCLCPP_WARN(logger, "DigitalVideo", "updateDigitalVideoSensorConfigurationAction not implemented");
+	RCLCPP_WARN(logger, "updateDigitalVideoSensorConfigurationAction not implemented");
 }
 
 
@@ -240,7 +240,7 @@ bool DigitalVideo_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec tran
 
 void DigitalVideo_ReceiveFSM::discovered(const std::string &service_uri, JausAddress &iop_address)
 {
-	RCLCPP_INFO(logger, "DigitalVideo", "discovered %s @ %s", service_uri.c_str(), iop_address.str().c_str());
+	RCLCPP_INFO(logger, "discovered %s @ %s", service_uri.c_str(), iop_address.str().c_str());
 	p_digital_resource_discovery_addr = iop_address;
 	for (std::map<int, std::shared_ptr<VideoEndpoint> >::iterator it = p_endpoints.begin(); it != p_endpoints.end(); ++it) {
 		pRegisterVideo(it->second->endpoint);
@@ -251,7 +251,7 @@ void DigitalVideo_ReceiveFSM::pRegisterVideo(DigitalResourceEndpoint endpoint)
 {
 	if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
 		lock_type lock(p_mutex);
-		RCLCPP_INFO(logger, "DigitalVideo", "register video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
+		RCLCPP_INFO(logger, "register video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
 		endpoint.iop_id = *(jausRouter->getJausAddress());
 		p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->registerEndpoint(endpoint, p_digital_resource_discovery_addr);
 	}
@@ -261,7 +261,7 @@ void DigitalVideo_ReceiveFSM::pUnregisterVideo(DigitalResourceEndpoint endpoint)
 {
 	if (!endpoint.server_url.empty() && p_digital_resource_discovery_addr.get() != 0) {
 		lock_type lock(p_mutex);
-		RCLCPP_INFO(logger, "DigitalVideo", "unregister video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
+		RCLCPP_INFO(logger, "unregister video %s on subsystem %d", endpoint.server_url.c_str(), p_digital_resource_discovery_addr.getSubsystemID());
 		endpoint.iop_id = *(jausRouter->getJausAddress());
 		p_ds_discovery_client_service->pDigitalResourceDiscoveryClient_ReceiveFSM->unregisterEndpoint(endpoint, p_digital_resource_discovery_addr);
 	}

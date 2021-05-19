@@ -1,10 +1,5 @@
-<library path="libfkie_iop_range_sensor">
-  <class name="RangeSensor" type="iop::RangeSensorPlugin" base_class_type="iop::PluginInterface">
-    <description>
-      RangeSensorService Plugin
-    </description>
-    <iop_service name="RangeSensor" id="urn:jaus:jss:environmentSensing:RangeSensor" version="1.0">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.0"/>
-    </iop_service>
-  </class>
+<library path="fkie_iop_range_sensor">
+	<class name="RangeSensor" type="urn_jaus_jss_environmentSensing_RangeSensor::RangeSensorService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:environmentSensing:RangeSensor" version="1.0">
+	</class>
 </library>
