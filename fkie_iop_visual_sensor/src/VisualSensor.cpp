@@ -20,12 +20,11 @@ along with this program; or you can read the full license at
 
 /** \author Alexander Tiderko */
 
+#include <fkie_iop_visual_sensor/VisualSensor.h>
 #include <fkie_iop_builder/util.h>
 #include <fkie_iop_component/iop_config.hpp>
 #include <fkie_iop_component/string.hpp>
-#include <fkie_iop_visual_sensor/VisualSensor.h>
 #include <limits>
-#include <string>
 
 
 using namespace iop;

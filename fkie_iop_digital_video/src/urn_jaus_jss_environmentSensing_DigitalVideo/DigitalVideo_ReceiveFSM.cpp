@@ -103,7 +103,7 @@ void DigitalVideo_ReceiveFSM::setupIopConfiguration()
 			int ep_id = std::atoi(entry[0].c_str());
 			std::string str_type = entry[1];
 			std::string ep_url = entry[2];
-			RCLCPP_INFO(logger, "Found digital endpoint <id: %d, type: %s, url: %s>", ep_id, str_type, ep_url);
+			RCLCPP_INFO(logger, "Found digital endpoint <id: %d, type: %s, url: %s>", ep_id, str_type.c_str(), ep_url.c_str());
 			int ep_type = 0;
 			if (str_type.compare("rtsp_topic") == 0) {
 				ep_type = digital_resource_endpoint::SERVER_TYPE_RTSP;
@@ -135,7 +135,7 @@ void DigitalVideo_ReceiveFSM::setupIopConfiguration()
 			}
 			p_endpoints[ep_id] = std::make_shared<VideoEndpoint>(cmp, ep_id, ep_type, ep_url, *this);
 		} else {
-			RCLCPP_WARN(logger, "skipped endpoint entry '%s' because of invalid format, expected list of: ID.TYPE.URL.", endpoints[i]);
+			RCLCPP_WARN(logger, "skipped endpoint entry '%s' because of invalid format, expected list of: ID.TYPE.URL.", endpoints[i].c_str());
 		}
 	}
 	p_discovery_client_service->pDiscoveryClient_ReceiveFSM->discover("urn:jaus:jss:iop:DigitalResourceDiscovery", &DigitalVideo_ReceiveFSM::discovered, this, 1, 255, jausRouter->getJausAddress()->getSubsystemID());

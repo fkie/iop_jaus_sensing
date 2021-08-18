@@ -32,8 +32,7 @@ along with this program; or you can read the full license at
 #include <geometry_msgs/msg/pose.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float32.hpp>
-#include <map>
-#include <string>
+#include <fkie_iop_component/iop_component.hpp>
 
 typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportVisualSensorCapabilities::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec CapabilityRec;
 typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportVisualSensorConfiguration::Body::VisualSensorConfigurationList::VisualSensorConfigurationRec ConfigurationRec;

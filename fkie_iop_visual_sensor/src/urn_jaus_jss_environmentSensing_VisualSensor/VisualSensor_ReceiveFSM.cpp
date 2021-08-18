@@ -23,8 +23,7 @@ along with this program; or you can read the full license at
 
 #include "urn_jaus_jss_environmentSensing_VisualSensor/VisualSensor_ReceiveFSM.h"
 #include <fkie_iop_component/iop_config.hpp>
-#include "fkie_iop_component/string.hpp"
-
+#include <fkie_iop_component/string.hpp>
 
 
 
@@ -110,7 +109,6 @@ void VisualSensor_ReceiveFSM::setupIopConfiguration()
 		vs->set_state_callback(&VisualSensor_ReceiveFSM::p_state_changed, this);
 		p_sensors[pit->first] = vs;
 	}
-
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryVisualSensorConfiguration::ID);
 }
 

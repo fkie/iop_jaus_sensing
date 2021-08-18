@@ -17,6 +17,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(fkie_iop_accesscontrol REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 
@@ -49,6 +50,7 @@ iop_code_generator(
 ###########
 set(dependencies
   fkie_iop_accesscontrol
+  geometry_msgs
   std_msgs
 )
 
@@ -58,6 +60,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} SHARED
+            src/VisualSensor.cpp
             ${cppfiles}
 )
 
