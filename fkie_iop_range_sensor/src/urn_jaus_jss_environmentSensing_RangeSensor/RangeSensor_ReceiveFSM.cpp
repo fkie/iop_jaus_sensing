@@ -158,7 +158,7 @@ void RangeSensor_ReceiveFSM::scan_callback(const ros::MessageEvent<sensor_msgs::
 {
 	lock_type lock(p_mutex);
 	ros::M_string& header = event.getConnectionHeader();
-	ros::Time receipt_time = event.getReceiptTime();
+	//ros::Time receipt_time = event.getReceiptTime();
 	const sensor_msgs::LaserScan::ConstPtr &msg = event.getMessage();
 	RangeSensor *sensor = NULL;
 	for (unsigned int i = 0; i < p_sensors.size(); i++) {
