@@ -100,7 +100,7 @@ void VisualSensor_ReceiveFSM::setupIopConfiguration()
 			std::string value = cap_entry[2];
 			params[id][name] = value;
 		} else {
-			RCLCPP_WARN(logger, "skipped capability entry '%s' because of invalid format", capabilities[i]);
+			RCLCPP_WARN(logger, "skipped capability entry '%s' because of invalid format", capabilities[i].c_str());
 		}
 	}
 	std::map<int, std::map<std::string, std::string> >::iterator pit;

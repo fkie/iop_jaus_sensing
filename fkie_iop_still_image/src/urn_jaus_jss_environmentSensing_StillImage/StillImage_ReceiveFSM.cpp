@@ -72,7 +72,7 @@ void StillImage_ReceiveFSM::setupIopConfiguration()
 			if (ep_id == 0) {
 				RCLCPP_WARN(logger, "sensor id 0 is reserved, please fix configuration!");
 			} else {
-				RCLCPP_INFO(logger, "Found image_topic <id: %d, topic: %s>", ep_id, ep_topic);
+				RCLCPP_INFO(logger, "Found image_topic <id: %d, topic: %s>", ep_id, ep_topic.c_str());
 			}
 
 			p_sensors[ep_id] = std::make_shared<StillImage_ReceiveFSM::ImageEndpoint>(cmp, ep_id, ep_topic, *this);
@@ -84,7 +84,7 @@ void StillImage_ReceiveFSM::setupIopConfiguration()
 			p_report_configuration.getBody()->getStillImageSensorConfigurationList()->addElement(sconf_rec);
 
 		} else {
-			RCLCPP_WARN(logger, "skipped image_topic entry '%s' because of invalid format, expected list of: ID.ROS_TOPIC_NAME", sensors[i]);
+			RCLCPP_WARN(logger, "skipped image_topic entry '%s' because of invalid format, expected list of: ID.ROS_TOPIC_NAME", sensors[i].c_str());
 		}
 	}
 }
