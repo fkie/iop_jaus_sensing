@@ -127,7 +127,7 @@ RangeSensor_ReceiveFSM::RangeSensor::RangeSensor(std::shared_ptr<iop::Component>
 	this->tf_frame_robot = tf_frame_robot;
 	this->parent = &parent;
 	this->ros_topic = topic;
-	iop::Config cfg(cmp, "RangeSensor_" + topic);
+	iop::Config cfg(cmp, "RangeSensor");
 	this->ros_sub = cfg.create_subscription<sensor_msgs::msg::LaserScan>(topic, 1, std::bind(&RangeSensor_ReceiveFSM::RangeSensor::scan_callback, this, std::placeholders::_1));
 	ReportRangeSensorCapabilities::Body::RangeSensorCapabilitiesList::RangeSensorCapabilitiesRec caprec;
 	caprec.setSensorID(id);
