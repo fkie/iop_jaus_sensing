@@ -44,8 +44,8 @@ along with this program; or you can read the full license at
 #include <rclcpp/rclcpp.hpp>
 #include <fkie_iop_component/iop_component.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/transform_listener.hpp>
 
 
 namespace urn_jaus_jss_environmentSensing_RangeSensor
