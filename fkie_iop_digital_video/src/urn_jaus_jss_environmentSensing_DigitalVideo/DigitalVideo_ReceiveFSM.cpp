@@ -76,10 +76,10 @@ namespace urn_jaus_jss_environmentSensing_DigitalVideo
 		iop::Config cfg(cmp, "DigitalVideo");
 
 		p_pub_ressource_id = cfg.create_publisher<std_msgs::msg::UInt16>("dv_resource_id", 10);
-		p_discovery_client_service = dynamic_cast<DiscoveryClientService *>(cmp->get_service("DiscoveryClient"));
+		p_discovery_client_service = dynamic_cast<DiscoveryClientService *>(cmp->get_service("DiscoveryClientService"));
 		if (p_discovery_client_service == NULL)
 			throw std::runtime_error("DiscoveryClient service not found, need to discover urn:jaus:jss:iop:DigitalResourceDiscovery");
-		p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService *>(cmp->get_service("DigitalResourceDiscoveryClient"));
+		p_ds_discovery_client_service = dynamic_cast<DigitalResourceDiscoveryClientService *>(cmp->get_service("DigitalResourceDiscoveryClientService"));
 		if (p_ds_discovery_client_service == NULL)
 			throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");
 		std::vector<std::string> endpoints;
