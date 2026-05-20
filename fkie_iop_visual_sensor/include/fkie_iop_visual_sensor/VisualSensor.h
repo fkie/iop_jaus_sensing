@@ -35,6 +35,7 @@ along with this program; or you can read the full license at
 #include <fkie_iop_component/iop_component.hpp>
 
 typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportVisualSensorCapabilities::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec CapabilityRec;
+typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportVisualSensorCapabilitiesExt::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec CapabilityRecExt;
 typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportVisualSensorConfiguration::Body::VisualSensorConfigurationList::VisualSensorConfigurationRec ConfigurationRec;
 typedef urn_jaus_jss_environmentSensing_VisualSensor::ReportSensorGeometricProperties::Body::GeometricPropertiesList::GeometricPropertiesSequence GeometricSeq;
 typedef urn_jaus_jss_environmentSensing_VisualSensor::SetVisualSensorConfiguration::Body::VisualSensorConfigurationSequence::VisualSensorConfigurationList::VisualSensorConfigurationRec SetConfigurationRec;
@@ -72,6 +73,7 @@ public:
 	bool is_pose_valid() { return p_pose_valid; }
 
 	CapabilityRec get_capability();
+	CapabilityRecExt get_capability_ext();
 	ConfigurationRec get_configuration();
 	GeometricSeq get_geometric();
 	void apply_cfg(SetConfigurationRec* cfg);

@@ -186,6 +186,27 @@ CapabilityRec VisualSensor::get_capability()
 	return result;
 }
 
+CapabilityRecExt VisualSensor::get_capability_ext()
+{
+	CapabilityRecExt result;
+	result.setSensorID(p_id);
+	result.setSensorName(p_name);
+	ReportVisualSensorCapabilitiesExt::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec::ZoomModes zm;
+	if (is_zoomable()) {
+		zm.setMixed(1);
+	} else {
+		zm.setNone(1);
+	}
+	result.setZoomModes(zm);
+	ReportVisualSensorCapabilitiesExt::Body::VisualSensorCapabilitiesList::VisualSensorCapabilitiesRec::SupportedStates ss;
+	ss.setActive(1);
+	if (is_switchable()) {
+		ss.setOff(1);
+	}
+	result.setSupportedStates(ss);
+	return result;
+}
+
 ConfigurationRec VisualSensor::get_configuration()
 {
 	ConfigurationRec result;

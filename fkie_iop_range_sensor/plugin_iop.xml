@@ -1,5 +1,5 @@
 <library path="fkie_iop_range_sensor">
 	<class name="RangeSensor" type="urn_jaus_jss_environmentSensing_RangeSensor::RangeSensorService" base_class_type="JTS::Service"
-		id="urn:jaus:jss:environmentSensing:RangeSensor" version="1.0">
+		id="urn:jaus:jss:environmentSensing:RangeSensor" version="2.0">
 	</class>
 </library>

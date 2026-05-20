@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(fkie_iop_range_sensor)
+project(fkie_iop_digital_resource_discovery)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -11,60 +11,62 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-find_package(fkie_iop_accesscontrol REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
+find_package(fkie_iop_events REQUIRED)
+find_package(fkie_iop_msgs REQUIRED)
+
 
 ###############
 ## setup IOP ##
 ###############
 iop_init()
 iop_export_service(
-  urn_jaus_jss_environmentSensing_RangeSensor
+  urn_jaus_jss_environmentSensing_DigitalResourceDiscovery
+  urn_jaus_jss_environmentSensing_DigitalResourceDiscoveryClient
 )
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.1/AccessControl.xml
     urn.jaus.jss.core-v1.1/Events.xml
+    urn.jaus.jss.core-v1.1/EventsClient.xml
     urn.jaus.jss.core-v1.1/Transport.xml
-    urn.jaus.jss.environmentSensing/RangeSensor.xml
+    urn.jaus.jss.environmentSensing/DigitalResourceDiscovery.xml
+    urn.jaus.jss.environmentSensing/DigitalResourceDiscoveryClient.xml
   OWN_IDLS
   OVERRIDES
-    include/urn_jaus_jss_environmentSensing_RangeSensor/RangeSensor_ReceiveFSM.h
-    src/urn_jaus_jss_environmentSensing_RangeSensor/RangeSensor_ReceiveFSM.cpp
+    include/urn_jaus_jss_environmentSensing_DigitalResourceDiscovery/DigitalResourceDiscovery_ReceiveFSM.h
+    include/urn_jaus_jss_environmentSensing_DigitalResourceDiscoveryClient/DigitalResourceDiscoveryClient_ReceiveFSM.h
+    src/urn_jaus_jss_environmentSensing_DigitalResourceDiscovery/DigitalResourceDiscovery_ReceiveFSM.cpp
+    src/urn_jaus_jss_environmentSensing_DigitalResourceDiscoveryClient/DigitalResourceDiscoveryClient_ReceiveFSM.cpp
   EXTERN_SERVICES
-    urn_jaus_jss_core_AccessControl
     urn_jaus_jss_core_Events
+    urn_jaus_jss_core_EventsClient
     urn_jaus_jss_core_Transport
   GENERATED_SOURCES cppfiles
 )
+
 
 ###########
 ## Build ##
 ###########
 set(dependencies
-  fkie_iop_accesscontrol
-  geometry_msgs
-  sensor_msgs
-  tf2_ros
+  fkie_iop_events
+  fkie_iop_msgs
 )
 
 include_directories(
+  include
+  ${fkie_iop_events_INCLUDE_DIRS}
   ${IOP_COMPONENT_INCLUDE_DIRS}
-  ${fkie_iop_accesscontrol_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME} SHARED
+            src/DigitalResourceEndpoint.cpp
             ${cppfiles}
 )
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  ${geometry_msgs_TARGETS}
-  ${sensor_msgs_TARGETS}
-  ${tf2_ros_TARGETS}
-  fkie_iop_accesscontrol::fkie_iop_accesscontrol
+  ${fkie_iop_msgs_TARGETS}
+  fkie_iop_events::fkie_iop_events
 )
 
 #############
@@ -74,6 +76,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 install(
   DIRECTORY ${IOP_INSTALL_INCLUDE_DIRS}
   DESTINATION include/${PROJECT_NAME}
+  PATTERN "*.old" EXCLUDE
+  PATTERN "*.gen" EXCLUDE
+)
+
+install(
+  DIRECTORY include/${PROJECT_NAME}
+  DESTINATION include
   PATTERN "*.old" EXCLUDE
   PATTERN "*.gen" EXCLUDE
 )
@@ -94,7 +103,7 @@ install(
 )
 ament_export_targets(${PROJECT_NAME}Targets HAS_LIBRARY_TARGET)
 
-ament_export_include_directories(include ${IOP_COMPONENT_INCLUDE_DIRS} ${fkie_iop_accesscontrol_INCLUDE_DIRS})
+ament_export_include_directories(include ${IOP_COMPONENT_INCLUDE_DIRS} ${fkie_iop_events_INCLUDE_DIRS})
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(${dependencies})
 pluginlib_export_plugin_description_file(fkie_iop_component plugin_iop.xml)

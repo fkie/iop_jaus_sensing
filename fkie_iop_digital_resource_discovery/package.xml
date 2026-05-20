@@ -1,23 +1,18 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>fkie_iop_still_image</name>
+  <name>fkie_iop_digital_resource_discovery</name>
   <version>2.2.0</version>
-  <description>Translates single images to IOP.</description>
+  <description>The full functional implementation of IOP digital resource discovery service.
+    This service can be included into other components. </description>
 
-  <author>Alexander Tiderko</author>
   <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
   <license>GPLv2</license>
   <url type="website">https://github.com/fkie/iop_jaus_sensing</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>cv_bridge</depend>
-  <depend>fkie_iop_accesscontrol</depend>
-  <depend>fkie_iop_discovery</depend>
-  <depend>fkie_iop_visual_sensor</depend>
-  <depend>image_transport</depend>
-  <depend>sensor_msgs</depend>
-  <depend>tf2</depend>
+  <depend>fkie_iop_events</depend>
+  <depend>fkie_iop_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

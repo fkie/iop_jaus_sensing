@@ -20,105 +20,96 @@ along with this program; or you can read the full license at
 
 /** \author Alexander Tiderko */
 
-
 #ifndef RANGESENSOR_RECEIVEFSM_H
 #define RANGESENSOR_RECEIVEFSM_H
 
-#include "JausUtils.h"
-#include <string>
 #include "InternalEvents/InternalEventHandler.h"
-#include "Transport/JausTransport.h"
 #include "JTSStateMachine.h"
-#include "urn_jaus_jss_environmentSensing_RangeSensor/Messages/MessageSet.h"
+#include "JausUtils.h"
+#include "Transport/JausTransport.h"
 #include "urn_jaus_jss_environmentSensing_RangeSensor/InternalEvents/InternalEventsSet.h"
+#include "urn_jaus_jss_environmentSensing_RangeSensor/Messages/MessageSet.h"
+#include <string>
 
 #include "InternalEvents/Receive.h"
 #include "InternalEvents/Send.h"
 
-#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
-#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
+#include "urn_jaus_jss_core_Transport/Transport_ReceiveFSM.h"
 
 #include "RangeSensor_ReceiveFSM_sm.h"
+#include <fkie_iop_component/iop_component.hpp>
 #include <mutex>
 #include <rclcpp/rclcpp.hpp>
-#include <fkie_iop_component/iop_component.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_listener.hpp>
 
+namespace urn_jaus_jss_environmentSensing_RangeSensor {
 
-namespace urn_jaus_jss_environmentSensing_RangeSensor
-{
-
-class DllExport RangeSensor_ReceiveFSM : public JTS::StateMachine
-{
-//friend RangeSensor;
+class DllExport RangeSensor_ReceiveFSM : public JTS::StateMachine {
+    // friend RangeSensor;
 public:
-	RangeSensor_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
-	virtual ~RangeSensor_ReceiveFSM();
+    RangeSensor_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
+    virtual ~RangeSensor_ReceiveFSM();
 
-	/// Handle notifications on parent state changes
-	virtual void setupNotifications();
-	virtual void setupIopConfiguration();
+    /// Handle notifications on parent state changes
+    virtual void setupNotifications();
+    virtual void setupIopConfiguration();
 
-	/// Action Methods
-	virtual void sendConfirmSensorConfigurationAction(SetRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData);
-	virtual void sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData);
-	virtual void sendReportRangeSensorCompressedDataAction(QueryRangeSensorCompressedData msg, std::string arg0, Receive::Body::ReceiveRec transportData);
-	virtual void sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData);
-	virtual void sendReportRangeSensorDataAction(QueryRangeSensorData msg, std::string arg0, Receive::Body::ReceiveRec transportData);
-	virtual void sendReportSensorGeometricPropertiesAction(QuerySensorGeometricProperties msg, Receive::Body::ReceiveRec transportData);
-	virtual void updateRangeSensorConfigurationAction();
+    /// Action Methods
+    virtual void sendConfirmSensorConfigurationAction(SetRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData);
+    virtual void sendReportRangeSensorCapabilitiesAction(QueryRangeSensorCapabilities msg, Receive::Body::ReceiveRec transportData);
+    virtual void sendReportRangeSensorCompressedDataAction(QueryRangeSensorCompressedData msg, std::string arg0, Receive::Body::ReceiveRec transportData);
+    virtual void sendReportRangeSensorConfigurationAction(QueryRangeSensorConfiguration msg, Receive::Body::ReceiveRec transportData);
+    virtual void sendReportRangeSensorDataAction(QueryRangeSensorData msg, std::string arg0, Receive::Body::ReceiveRec transportData);
+    virtual void sendReportSensorGeometricPropertiesAction(QuerySensorGeometricProperties msg, Receive::Body::ReceiveRec transportData);
+    virtual void updateRangeSensorConfigurationAction();
 
+    /// Guard Methods
+    virtual bool isControllingClient(Receive::Body::ReceiveRec transportData);
+    virtual bool isCoordinateTranformSupported();
 
-	/// Guard Methods
-	virtual bool isControllingClient(Receive::Body::ReceiveRec transportData);
-	virtual bool isCoordinateTranformSupported();
-
-
-
-	RangeSensor_ReceiveFSMContext *context;
+    RangeSensor_ReceiveFSMContext* context;
 
 protected:
+    class RangeSensor {
+    public:
+        RangeSensor(std::shared_ptr<iop::Component> cmp, int id, std::string topic, std::string tf_frame_robot, RangeSensor_ReceiveFSM& parent);
+        ~RangeSensor();
+        int id;
+        bool initialized;
+        std::string ros_topic;
+        std::string tf_frame_robot;
+        rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr ros_sub;
+        ReportRangeSensorCapabilities capabilities;
+        ReportSensorGeometricProperties geometric;
+        ReportRangeSensorConfiguration configuration;
+        ReportRangeSensorData sensor_data;
+        void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
 
-	class RangeSensor {
-	public:
-		RangeSensor(std::shared_ptr<iop::Component> cmp, int id, std::string topic, std::string tf_frame_robot, RangeSensor_ReceiveFSM &parent);
-		~RangeSensor();
-		int id;
-		bool initialized;
-		std::string ros_topic;
-		std::string tf_frame_robot;
-		rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr ros_sub;
-		ReportRangeSensorCapabilities capabilities;
-		ReportSensorGeometricProperties geometric;
-		ReportRangeSensorConfiguration configuration;
-		ReportRangeSensorData sensor_data;
-		void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
-	private:
-		RangeSensor_ReceiveFSM *parent;
+    private:
+        RangeSensor_ReceiveFSM* parent;
+    };
+    /// References to parent FSMs
+    urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+    urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+    urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
 
-	};
-	/// References to parent FSMs
-	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
-	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+    std::shared_ptr<iop::Component> cmp;
+    rclcpp::Logger logger;
 
-	std::shared_ptr<iop::Component> cmp;
-	rclcpp::Logger logger;
+    typedef std::shared_ptr<sensor_msgs::msg::LaserScan const> LaserScanConstPtr;
+    typedef std::recursive_mutex mutex_type;
+    typedef std::unique_lock<mutex_type> lock_type;
+    mutable mutex_type p_mutex;
+    std::vector<RangeSensor*> p_sensors;
+    std::string p_tf_frame_robot;
+    std::unique_ptr<tf2_ros::Buffer> p_tf_buffer;
+    std::shared_ptr<tf2_ros::TransformListener> p_tf_listener;
 
-	typedef std::shared_ptr<sensor_msgs::msg::LaserScan const> LaserScanConstPtr;
-	typedef std::recursive_mutex mutex_type;
-	typedef std::unique_lock<mutex_type> lock_type;
-	mutable mutex_type p_mutex;
-	std::vector<RangeSensor *> p_sensors;
-	std::string p_tf_frame_robot;
-	std::unique_ptr<tf2_ros::Buffer> p_tf_buffer;
-	std::shared_ptr<tf2_ros::TransformListener> p_tf_listener;
-
-	void stop_subscriber();
-
+    void stop_subscriber();
 };
 
 }

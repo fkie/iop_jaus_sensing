@@ -1,0 +1,4 @@
+<library path="fkie_iop_client_digital_resource">
+  <class name="DigitalResourceClient" type="iop::DigitalResourceClient" base_class_type="iop::PluginInterface">
+  </class>
+</library>

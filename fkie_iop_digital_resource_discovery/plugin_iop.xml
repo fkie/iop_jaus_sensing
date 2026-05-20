@@ -1,0 +1,6 @@
+<library path="fkie_iop_digital_resource_discovery">
+	<class name="DigitalResourceDiscovery" type="urn_jaus_jss_environmentSensing_DigitalResourceDiscovery::DigitalResourceDiscoveryService" base_class_type="JTS::Service" id="urn:jaus:jss:environmentSensing:DigitalResourceDiscovery" version="2.0">
+	</class>
+	<class name="DigitalResourceDiscoveryClient" type="urn_jaus_jss_environmentSensing_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService" base_class_type="JTS::Service" id="urn:jaus:jss:environmentSensing:DigitalResourceDiscoveryClient" version="2.0">
+	</class>
+</library>
