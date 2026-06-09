@@ -25,9 +25,9 @@ iop_export_service(
 )
 iop_code_generator(
   IDLS
-    urn.jaus.jss.core-v1.1/Events.xml
-    urn.jaus.jss.core-v1.1/EventsClient.xml
-    urn.jaus.jss.core-v1.1/Transport.xml
+    urn.jaus.jss.core/Events.xml
+    urn.jaus.jss.core/EventsClient.xml
+    urn.jaus.jss.core/Transport.xml
     urn.jaus.jss.environmentSensing/DigitalResourceDiscovery.xml
     urn.jaus.jss.environmentSensing/DigitalResourceDiscoveryClient.xml
   OWN_IDLS
