@@ -39,11 +39,11 @@ DigitalResourceClient::DigitalResourceClient()
     pParentService = nullptr;
     this->m_URN = "urn:jaus:jss:environmentSensing:DigitalResourceDiscoveryClient";
     this->m_name = "DigitalResourceClientService";
-    this->m_version_manjor = 2;
+    this->m_version_major = 2;
     this->m_version_minor = 0;
     this->m_uri_inherits_from = "urn_jaus_jss_environmentSensing_DigitalResourceDiscoveryClient::DigitalResourceDiscoveryClientService";
     this->m_name_inherits_from = "DigitalResourceDiscoveryClientService";
-    this->m_inherits_from_version_manjor = 2;
+    this->m_inherits_from_version_major = 2;
     this->m_inherits_from_min_version_minor = 0;
 }
 
