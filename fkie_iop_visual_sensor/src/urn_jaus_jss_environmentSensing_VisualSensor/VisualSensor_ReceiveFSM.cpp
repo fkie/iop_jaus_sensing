@@ -75,12 +75,11 @@ void VisualSensor_ReceiveFSM::setupIopConfiguration()
 {
     iop::Config cfg(cmp, "VisualSensor");
     std::vector<std::string> capabilities;
-    cfg.declare_param<std::vector<std::string>>("capabilities", capabilities, false,
+
+    cfg.param_vector<std::vector<std::string>>("capabilities", capabilities, capabilities, false,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "A list with sensors and their capabilities. Format: ID.PARAMETER_NAME.VALUE",
         "Default: []");
-
-    cfg.param_vector<std::vector<std::string>>("capabilities", capabilities, capabilities);
     std::map<int, std::map<std::string, std::string>> params;
     for (unsigned int i = 0; i < capabilities.size(); i++) {
         auto cap_entry = iop::split(iop::trim(capabilities[i]), '.', 3);

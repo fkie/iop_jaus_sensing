@@ -82,11 +82,10 @@ void DigitalVideo_ReceiveFSM::setupIopConfiguration()
     if (p_ds_discovery_client_service == NULL)
         throw std::runtime_error("DigitalResourceDiscoveryClientService not found, needed by DigitalVideo");
     std::vector<std::string> endpoints;
-    cfg.declare_param<std::vector<std::string>>("endpoints", endpoints, false,
+    cfg.param_vector<std::vector<std::string>>("endpoints", endpoints, endpoints, false,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "list with video streams. Format: ID.TYPE_OF_SOURCE.URL. Example for RTSP stream: 0.rtsp.rtsp://URL",
         "Default: []");
-    cfg.param_vector<std::vector<std::string>>("endpoints", endpoints, endpoints);
     for (unsigned int i = 0; i < endpoints.size(); i++) {
         auto entry = iop::split(iop::trim(endpoints[i]), '.', 3);
         if (entry.size() == 3) {

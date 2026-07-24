@@ -62,11 +62,10 @@ void DigitalResourceDiscovery_ReceiveFSM::setupNotifications()
 void DigitalResourceDiscovery_ReceiveFSM::setupIopConfiguration()
 {
     iop::Config cfg(cmp, "DigitalResourceDiscovery");
-    cfg.declare_param<int64_t>("delay_first_response", p_delay_first_response, true,
+    cfg.param<int64_t>("delay_first_response", p_delay_first_response, p_delay_first_response, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER,
         "Waits given time in seconds for start of other components. While this time all requests for DigitalResourceEndpoint will be ignored.",
         "Default: 5 sec");
-    cfg.param<int64_t>("delay_first_response", p_delay_first_response, p_delay_first_response, true);
     p_start_time = iop::Component::now_secs();
     pEvents_ReceiveFSM->get_event_handler().register_query(QueryDigitalResourceEndpoint::ID);
     pEvents_ReceiveFSM->get_event_handler().set_report(QueryDigitalResourceEndpoint::ID, &p_report_digital_resource_endpoint);

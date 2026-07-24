@@ -82,22 +82,19 @@ void RangeSensor_ReceiveFSM::setupIopConfiguration()
     iop::Config cfg(cmp, "RangeSensor");
     pEvents_ReceiveFSM->get_event_handler().register_query(QueryRangeSensorData::ID);
     stop_subscriber();
-    cfg.declare_param<std::string>("tf_frame_robot", p_tf_frame_robot, true,
+    std::vector<std::string> sensors;
+    cfg.param<std::string>("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
         "TF frame used in ROS for local coordinates. This value is set in each command message.",
         "Default: 'base_link'");
-    std::vector<std::string> sensors;
-    cfg.declare_param<std::vector<std::string>>("range_sensors", sensors, false,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
-        "A list with laser scan topics.",
-        "Default: []");
-
-    cfg.param("tf_frame_robot", p_tf_frame_robot, p_tf_frame_robot);
     int sensor_id = 1; // id 0 is reserved for all
     lock_type lock(p_mutex);
     p_tf_buffer = std::make_unique<tf2_ros::Buffer>(cmp->get_clock());
     p_tf_listener = std::make_shared<tf2_ros::TransformListener>(*p_tf_buffer);
-    cfg.param_vector<std::vector<std::string>>("range_sensors", sensors, sensors);
+    cfg.param_vector<std::vector<std::string>>("range_sensors", sensors, sensors, false,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
+        "A list with laser scan topics.",
+        "Default: []");
     for (unsigned int i = 0; i < sensors.size(); i++) {
         std::string ros_topic = sensors[i];
         // resolve to node namespace

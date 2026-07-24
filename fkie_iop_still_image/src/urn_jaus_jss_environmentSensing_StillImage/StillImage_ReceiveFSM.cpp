@@ -49,11 +49,10 @@ void StillImage_ReceiveFSM::setupIopConfiguration()
     iop::Config cfg(cmp, "StillImage");
     pEvents_ReceiveFSM->get_event_handler().register_query(QueryStillImageDataExt::ID, true);
     std::vector<std::string> sensors;
-    cfg.declare_param<std::vector<std::string>>("image_topics", sensors, false,
+    cfg.param_vector<std::vector<std::string>>("image_topics", sensors, sensors, false,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "List of pairs of type {ID.ROS_TOPIC_NAME}. Example: - 4.map_image/compressed. The topics must have a type of sensor_msgs::CompressedImage.",
         "Default: []");
-    cfg.param_vector<std::vector<std::string>>("image_topics", sensors, sensors);
     for (unsigned int i = 0; i < sensors.size(); i++) {
         auto entry = iop::split(iop::trim(sensors[i]), '.', 2);
         if (entry.size() == 2) {
